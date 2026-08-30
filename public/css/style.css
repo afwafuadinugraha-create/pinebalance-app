@@ -1,0 +1,187 @@
+:root {
+    --bg-main: #f4f6f9;
+    --sidebar-bg: rgba(255, 255, 255, 0.96);
+    --card-bg: rgba(255, 255, 255, 0.94);
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --accent-blue: #2563eb;
+    --accent-green: #10b981;
+    --accent-gold: #f59e0b;
+    --accent-red: #ef4444;
+    --shadow-card: 0 10px 25px -5px rgba(148, 163, 184, 0.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+/* Custom Background Image Terkait Perkebunan / Agrikultur GGP */
+body { 
+    background-image: linear-gradient(135deg, rgba(244, 246, 249, 0.92), rgba(226, 232, 240, 0.92)), 
+                      url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: var(--text-primary); 
+    display: flex; 
+    min-height: 100vh; 
+}
+
+/* Sidebar Navigation */
+.sidebar {
+    width: 280px; background-color: var(--sidebar-bg); padding: 24px 20px;
+    display: flex; flex-direction: column; gap: 20px; border-right: 1px solid var(--border-color);
+    position: fixed; height: 100vh; z-index: 100; backdrop-filter: blur(10px);
+}
+.brand-header { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+
+/* Logo GGP Container */
+.brand-logo-ggp {
+    width: 46px; height: 46px; border-radius: 12px; background: #ffffff;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); border: 1px solid var(--border-color); flex-shrink: 0;
+}
+.brand-logo-ggp img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+
+.brand-text h2 { font-size: 18px; font-weight: 800; color: #0f172a; }
+.brand-text p { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+/* Logo GGP Badge */
+.ggp-logo-badge {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+/* Upload Area */
+.upload-box-sidebar {
+    border: 2px dashed #bfdbfe; border-radius: 14px; padding: 16px; text-align: center;
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 700; color: var(--accent-blue); background: #eff6ff;
+    transition: all 0.2s ease;
+}
+.upload-box-sidebar:hover { border-color: var(--accent-blue); background: #dbeafe; }
+.upload-box-sidebar i { font-size: 22px; }
+
+/* Nav Menu */
+.nav-menu { display: flex; flex-direction: column; gap: 8px; }
+.nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
+    background: transparent; border: none; color: var(--text-muted); font-weight: 600;
+    font-size: 14px; cursor: pointer; transition: all 0.2s ease; text-align: left; width: 100%;
+}
+.nav-item:hover { background: #f1f5f9; color: var(--text-primary); }
+.nav-item.active { background: #eff6ff; color: var(--accent-blue); font-weight: 700; }
+.nav-item i { font-size: 18px; width: 22px; }
+
+/* Filter Card */
+.filter-card {
+    background: #f8fafc; border-radius: 16px; padding: 16px; border: 1px solid var(--border-color);
+    display: flex; flex-direction: column; gap: 12px; margin-top: auto;
+}
+.filter-header { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent-blue); font-size: 13px; }
+.filter-group { display: flex; flex-direction: column; gap: 6px; }
+.filter-group label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+.filter-group select {
+    background: #ffffff; color: var(--text-primary); border: 1px solid var(--border-color);
+    padding: 10px 12px; border-radius: 10px; font-weight: 600; font-size: 13px; outline: none; width: 100%;
+}
+
+/* Main Content Layout */
+.main-wrapper {
+    margin-left: 280px; flex: 1; padding: 24px 32px; display: flex; flex-direction: column; gap: 20px;
+    width: calc(100% - 280px);
+}
+
+.top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--card-bg); padding: 18px 24px; border-radius: 20px; box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-color); backdrop-filter: blur(8px);
+}
+.badge-status-file { background: #f1f5f9; padding: 8px 16px; border-radius: 14px; font-size: 12px; font-weight: 700; color: var(--text-muted); }
+
+.tab-page { display: none; }
+.tab-page.active { display: block; }
+
+/* Dashboard Charts Grid (2 Column: Line & Pie) */
+.dashboard-charts-grid {
+    display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
+}
+
+/* Cards & KPI Grid */
+.card {
+    background: var(--card-bg); border-radius: 20px; padding: 22px 26px;
+    box-shadow: var(--shadow-card); border: 1px solid var(--border-color); display: flex;
+    flex-direction: column; gap: 18px; margin-bottom: 20px; backdrop-filter: blur(8px);
+}
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+.card-header h3 { font-size: 15px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+
+.icon-circle-blue {
+    width: 46px; height: 46px; background: #eff6ff; color: var(--accent-blue);
+    border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+
+/* KPI Grid */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.kpi-card {
+    padding: 16px 18px; border-radius: 16px; display: flex; align-items: center; gap: 14px;
+    border: 1px solid #e2e8f0; background: #ffffff; transition: transform 0.2s ease;
+}
+.kpi-card:hover { transform: translateY(-2px); }
+.kpi-icon-box {
+    width: 42px; height: 42px; border-radius: 12px; display: flex;
+    align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.kpi-blue { border-color: #bfdbfe; background: #f0f9ff; }
+.kpi-blue .kpi-icon-box { background: #dbeafe; color: var(--accent-blue); }
+
+.kpi-green { border-color: #bbf7d0; background: #f0fdf4; }
+.kpi-green .kpi-icon-box { background: #dcfce7; color: var(--accent-green); }
+
+.kpi-gold { border-color: #fef08a; background: #fefce8; }
+.kpi-gold .kpi-icon-box { background: #fef9c3; color: var(--accent-gold); }
+
+.kpi-red { border-color: #fecaca; background: #fef2f2; }
+.kpi-red .kpi-icon-box { background: #fee2e2; color: var(--accent-red); }
+
+.kpi-title { font-size: 11px; color: var(--text-muted); font-weight: 700; display: block; }
+.kpi-value { font-size: 20px; font-weight: 800; color: #0f172a; margin-top: 2px; }
+
+/* Table Styling */
+.table-container { overflow-x: auto; border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+th { background: #f8fafc; color: var(--text-muted); font-weight: 700; padding: 12px 16px; border-bottom: 2px solid #e2e8f0; font-size: 12px; text-transform: uppercase; white-space: nowrap; }
+td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; color: var(--text-primary); font-weight: 500; white-space: nowrap; }
+tbody tr:hover { background-color: #f8fafc; }
+
+.status-pill { padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: 800; text-transform: uppercase; display: inline-block; }
+.status-normal { background: #dcfce7; color: #15803d; }
+.status-mad { background: #fef9c3; color: #a16207; }
+.status-wp { background: #fee2e2; color: #b91c1c; }
+
+/* Empty State */
+.empty-state-box {
+    text-align: center; padding: 50px 20px; color: var(--text-muted);
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.empty-state-box i { font-size: 48px; color: #cbd5e1; }
+.empty-state-box p { font-size: 14px; font-weight: 600; }
+
+/* Media Query Responsif */
+@media (max-width: 1024px) {
+    .dashboard-charts-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid var(--border-color); padding: 16px; }
+    .main-wrapper { margin-left: 0; width: 100%; padding: 16px; }
+    .kpi-grid { grid-template-columns: 1fr; }
+    .top-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
