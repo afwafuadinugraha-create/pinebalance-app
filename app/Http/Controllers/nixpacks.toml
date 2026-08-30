@@ -1,3 +1,5 @@
+providers = ["php"]
+
 [phases.build]
 cmds = [
   "composer install --no-dev --optimize-autoloader",
