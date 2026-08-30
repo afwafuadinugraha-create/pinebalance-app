@@ -1,11 +1,13 @@
 providers = ["php"]
 
 [phases.setup]
-nixPkgs = ["php82", "composer"]
+nixPkgs = ["php82", "composer", "php82-extensions gd"]
+
+[phases.install]
+cmds = ["composer install --optimize-autoloader --no-scripts --no-interaction --ignore-platform-req=ext-gd"]
 
 [phases.build]
 cmds = [
-  "composer install --optimize-autoloader --no-scripts --no-interaction --ignore-platform-req=ext-gd",
   "php artisan config:cache",
   "php artisan route:cache",
   "php artisan view:cache"
