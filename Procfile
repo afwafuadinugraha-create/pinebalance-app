@@ -1,2 +1,2 @@
-web: vendor/bin/heroku-php-apache2 public/ -C apache_app.conf
+web: vendor/bin/heroku-php-apache2 public/
 release: php artisan migrate --force
