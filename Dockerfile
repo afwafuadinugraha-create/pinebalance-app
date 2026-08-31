@@ -1,10 +1,16 @@
-FROM composer:2 AS vendor
+FROM serversideup/php:8.3-fpm-nginx AS vendor
 
-WORKDIR /app
+USER root
 
-COPY composer.json composer.lock ./
+RUN install-php-extensions gd \
+    && mkdir -p /var/www/html \
+    && chown www-data:www-data /var/www/html
 
-ENV COMPOSER_ALLOW_SUPERUSER=1
+WORKDIR /var/www/html
+
+COPY --chown=www-data:www-data composer.json composer.lock ./
+
+USER www-data
 
 RUN composer install \
     --no-dev \
@@ -16,10 +22,14 @@ RUN composer install \
 
 FROM serversideup/php:8.3-fpm-nginx
 
+USER root
+
+RUN install-php-extensions gd
+
 WORKDIR /var/www/html
 
 COPY --chown=www-data:www-data . .
-COPY --from=vendor --chown=www-data:www-data /app/vendor ./vendor
+COPY --from=vendor --chown=www-data:www-data /var/www/html/vendor ./vendor
 
 ENV NGINX_WEBROOT=/var/www/html/public \
     SSL_MODE=off \
@@ -37,5 +47,7 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
     && php artisan package:discover --ansi --no-interaction \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R ug+rwX storage bootstrap/cache
+
+USER www-data
 
 EXPOSE 8080
