@@ -46,8 +46,25 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                 // 1. Pembacaan Parameter Input
                 $rainfall = floatval($this->getValue($row, ['rainfall_mm', 'rainfall', 'curah_hujan', 'hujan_mm', 'hujan', 'rf_mm', 'rf']));
                 $irigasi = floatval($this->getValue($row, ['irigasi_mm', 'irigasi', 'siram_mm', 'siram', 'irrigation_mm', 'irrigation']));
-                $luasRencana = floatval($this->getValue($row, ['luas_siram_rencana_ha', 'luas_rencana', 'luas_rencana_ha', 'rencana_ha']));
-                $luasReal = floatval($this->getValue($row, ['luas_siram_real_ha', 'luas_real', 'luas_real_ha', 'real_ha']));
+                $luasRencana = $this->parseAreaValue($this->getValue($row, [
+                    'luas_siram_rencana_netto_ha',
+                    'luas_siram_rencana_netto_ha',
+                    'luas_siram_rencana_ha',
+                    'luas_siram_rencana',
+                    'luas_rencana_netto_ha',
+                    'luas_rencana_ha',
+                    'luas_rencana',
+                    'rencana_ha',
+                    'rencana_netto_ha',
+                ]));
+                $luasReal = $this->parseAreaValue($this->getValue($row, [
+                    'luas_siram_real_ha',
+                    'luas_siram_real',
+                    'luas_real_ha',
+                    'luas_real',
+                    'real_ha',
+                    'real',
+                ]));
                 
                 // Evapotranspirasi (ET)
                 $evapotranspirasi = floatval($this->getValue($row, [
@@ -122,15 +139,45 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
     private function getValue($row, array $keys)
     {
         foreach ($row as $rowKey => $val) {
-            $cleanKey = strtolower(trim(str_replace([' ', '/', '-', '(', ')', '_'], '', $rowKey)));
+            $cleanKey = $this->normalizeKey($rowKey);
             foreach ($keys as $k) {
-                $cleanTarget = strtolower(trim(str_replace([' ', '/', '-', '(', ')', '_'], '', $k)));
+                $cleanTarget = $this->normalizeKey($k);
+
                 if ($cleanKey === $cleanTarget) {
+                    return $val;
+                }
+
+                if (str_contains($cleanKey, $cleanTarget) || str_contains($cleanTarget, $cleanKey)) {
                     return $val;
                 }
             }
         }
         return null;
+    }
+
+    private function normalizeKey($value)
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        return strtolower(trim(preg_replace('/[^a-z0-9]/i', '', (string) $value)));
+    }
+
+    private function parseAreaValue($value)
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_string($value)) {
+            $value = trim($value);
+            if (preg_match('/^(.+?)\s*\/\s*(.+)$/', $value, $matches)) {
+                return floatval(trim($matches[1]));
+            }
+        }
+
+        return floatval($value);
     }
 
     private function transformDate($value)
