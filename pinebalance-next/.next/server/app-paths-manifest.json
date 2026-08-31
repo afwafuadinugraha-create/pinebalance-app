@@ -1,8 +1,0 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/lokasi/route": "app/api/lokasi/route.js",
-  "/api/import/route": "app/api/import/route.js",
-  "/api/data/route": "app/api/data/route.js",
-  "/api/pg/route": "app/api/pg/route.js",
-  "/page": "app/page.js"
-}
