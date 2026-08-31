@@ -1,19 +1,10 @@
-FROM richarvey/nginx-php-fpm:3.1.6
+FROM composer:2 AS vendor
 
-WORKDIR /var/www/html
+WORKDIR /app
 
-COPY . /var/www/html
-COPY scripts/00-laravel-deploy.sh /etc/entrypoint.d/00-laravel-deploy.sh
+COPY composer.json composer.lock ./
 
-ENV SKIP_COMPOSER=1 \
-    WEBROOT=/var/www/html/public \
-    RUN_SCRIPTS=1 \
-    REAL_IP_HEADER=1 \
-    PHP_ERRORS_STDERR=1 \
-    APP_ENV=production \
-    APP_DEBUG=false \
-    COMPOSER_ALLOW_SUPERUSER=1 \
-    PORT=10000
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN composer install \
     --no-dev \
@@ -21,11 +12,30 @@ RUN composer install \
     --no-progress \
     --no-scripts \
     --prefer-dist \
-    --optimize-autoloader \
-    && chmod +x /etc/entrypoint.d/00-laravel-deploy.sh \
-    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/testing storage/framework/views storage/logs \
+    --optimize-autoloader
+
+FROM serversideup/php:8.3-fpm-nginx
+
+WORKDIR /var/www/html
+
+COPY --chown=www-data:www-data . .
+COPY --from=vendor --chown=www-data:www-data /app/vendor ./vendor
+
+ENV NGINX_WEBROOT=/var/www/html/public \
+    SSL_MODE=off \
+    PHP_OPCACHE_ENABLE=1 \
+    AUTORUN_ENABLED=true \
+    AUTORUN_LARAVEL_CONFIG_CACHE=true \
+    AUTORUN_LARAVEL_ROUTE_CACHE=true \
+    AUTORUN_LARAVEL_VIEW_CACHE=true \
+    AUTORUN_LARAVEL_MIGRATION=true \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    PORT=8080
+
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/testing storage/framework/views storage/logs bootstrap/cache \
+    && php artisan package:discover --ansi --no-interaction \
+    && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R ug+rwX storage bootstrap/cache
 
-EXPOSE 10000
-
-CMD ["/start.sh"]
+EXPOSE 8080
