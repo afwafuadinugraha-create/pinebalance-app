@@ -17,4 +17,5 @@ composer install \
 
 php artisan package:discover --ansi --no-interaction
 php artisan config:cache --no-interaction
+php artisan route:cache --no-interaction
 php artisan migrate --force --no-interaction
