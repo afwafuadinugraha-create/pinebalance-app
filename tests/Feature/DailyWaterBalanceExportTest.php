@@ -1,0 +1,33 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\DailyWaterBalance;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class DailyWaterBalanceExportTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_export_route_returns_successful_response(): void
+    {
+        DailyWaterBalance::create([
+            'pg' => 'PG-01',
+            'lokasi' => 'Lokasi A',
+            'tanggal' => '2026-09-01',
+            'rainfall_mm' => 12.5,
+            'luas_siram_rencana_ha' => 10,
+            'luas_siram_real_ha' => 8,
+            'irigasi_mm' => 40,
+            'irigasi_efektif_mm' => 32,
+            'evapotranspirasi_mm' => 25,
+            'water_balance_mm' => 80.5,
+            'status_zone' => 'FC - MAD 50%',
+        ]);
+
+        $response = $this->get('/api/water-balance/export?pg=PG-01');
+
+        $response->assertStatus(200);
+    }
+}

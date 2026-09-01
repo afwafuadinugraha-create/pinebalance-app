@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Imports\WaterBalanceImport;
 use App\Models\DailyWaterBalance;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class WaterBalanceController extends Controller
 {
@@ -80,7 +82,7 @@ class WaterBalanceController extends Controller
         foreach ($allData as $row) {
             $lokasi = $row->lokasi;
             $monthKey = substr($row->tanggal, 0, 7); // Format "YYYY-MM"
-            
+
             $allMonths[$monthKey] = true;
 
             if (!isset($grouped[$lokasi])) {
@@ -104,5 +106,113 @@ class WaterBalanceController extends Controller
             'months' => $monthsArray,
             'report' => $grouped
         ]);
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+        ]);
+
+        try {
+            $importer = new WaterBalanceImport();
+            Excel::import($importer, $request->file('file'));
+
+            $summary = $importer->getSummary();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data Excel berhasil diproses. ' . $summary['created'] . ' data baru, ' . $summary['updated'] . ' data diperbarui, ' . $summary['skipped'] . ' data dilewati.',
+                'summary' => $summary,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Import data gagal: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function downloadTemplate()
+    {
+        $path = storage_path('app/templates/water-balance-template.csv');
+
+        if (!file_exists($path)) {
+            abort(404, 'Template import tidak ditemukan.');
+        }
+
+        return response()->download($path, 'water-balance-template.csv');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $pg = $request->query('pg');
+
+        $records = DailyWaterBalance::query();
+
+        if ($pg) {
+            $records->where('pg', $pg);
+        }
+
+        $data = $records
+            ->orderBy('tanggal', 'asc')
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'pg' => $row->pg,
+                    'lokasi' => $row->lokasi,
+                    'tanggal' => $row->tanggal,
+                    'rainfall_mm' => $row->rainfall_mm,
+                    'luas_siram_rencana_ha' => $row->luas_siram_rencana_ha,
+                    'luas_siram_real_ha' => $row->luas_siram_real_ha,
+                    'irigasi_mm' => $row->irigasi_mm,
+                    'irigasi_efektif_mm' => $row->irigasi_efektif_mm,
+                    'evapotranspirasi_mm' => $row->evapotranspirasi_mm,
+                    'water_balance_mm' => $row->water_balance_mm,
+                    'status_zone' => $row->status_zone,
+                ];
+            })
+            ->toArray();
+
+        $filename = $pg ? 'water-balance-' . preg_replace('/[^a-z0-9]+/i', '-', strtolower($pg)) . '.csv' : 'water-balance-export.csv';
+
+        $handle = fopen('php://temp', 'w+');
+        fputcsv($handle, [
+            'pg',
+            'lokasi',
+            'tanggal',
+            'rainfall_mm',
+            'luas_siram_rencana_ha',
+            'luas_siram_real_ha',
+            'irigasi_mm',
+            'irigasi_efektif_mm',
+            'evapotranspirasi_mm',
+            'water_balance_mm',
+            'status_zone',
+        ]);
+
+        foreach ($data as $row) {
+            fputcsv($handle, [
+                $row['pg'],
+                $row['lokasi'],
+                $row['tanggal'],
+                $row['rainfall_mm'],
+                $row['luas_siram_rencana_ha'],
+                $row['luas_siram_real_ha'],
+                $row['irigasi_mm'],
+                $row['irigasi_efektif_mm'],
+                $row['evapotranspirasi_mm'],
+                $row['water_balance_mm'],
+                $row['status_zone'],
+            ]);
+        }
+
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        return response($csv)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 }

@@ -154,6 +154,105 @@
             margin-top: 2px;
         }
 
+        .upload-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .upload-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #0284c7, #0ea5e9);
+            color: #ffffff;
+            border: none;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 10px 18px rgba(2, 132, 199, 0.22);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 20px rgba(2, 132, 199, 0.26);
+        }
+
+        .upload-status-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            background: rgba(148, 163, 184, 0.12);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 999px;
+            padding: 8px 12px;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .toast {
+            min-width: 280px;
+            max-width: 360px;
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.92);
+            color: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.22);
+            padding: 14px 16px;
+            border-left: 5px solid #0284c7;
+            opacity: 0;
+            transform: translateY(-10px);
+            animation: toastIn 0.25s ease forwards;
+        }
+
+        .toast.success {
+            border-left-color: #22c55e;
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.82);
+            line-height: 1.5;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         @media (max-width: 1024px) {
             body {
                 display: block !important;
@@ -320,14 +419,29 @@
         </div>
     </aside>
 
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
     <main class="main-wrapper">
         <header class="top-bar">
             <div>
                 <h1 style="font-size: 20px; font-weight: 800; color: #0f172a;">Daily Water Balance Monitoring System</h1>
                 <p style="font-size: 13px; color: #0284c7; font-weight: 700; margin-top: 2px;">PT. Great Giant Pineapple - Irrigation PPIC</p>
             </div>
-            <div id="fileStatusBadge" class="badge-status-file">
-                <i class="fa-solid fa-database" style="color: #0284c7;"></i> Database Connected
+
+            <div class="upload-actions">
+                <a href="{{ url('/api/water-balance/template') }}" class="upload-button" style="text-decoration: none; background: linear-gradient(135deg, #16a34a, #22c55e);">
+                    <i class="fa-solid fa-download"></i>
+                    Template Excel
+                </a>
+                <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" hidden>
+                <button type="button" id="triggerUploadBtn" class="upload-button">
+                    <i class="fa-solid fa-file-excel"></i>
+                    Upload Excel
+                </button>
+                <div id="uploadStatusText" class="upload-status-text">Belum ada file dipilih</div>
+                <div id="fileStatusBadge" class="badge-status-file">
+                    <i class="fa-solid fa-database" style="color: #0284c7;"></i> Database Connected
+                </div>
             </div>
         </header>
 
@@ -545,5 +659,90 @@
     </main>
 
     <script src="{{ asset('js/app.js') }}"></script>
+    <script>
+        const uploadToken = '{{ csrf_token() }}';
+        const excelFileInput = document.getElementById('excelFileInput');
+        const triggerUploadBtn = document.getElementById('triggerUploadBtn');
+        const uploadStatusText = document.getElementById('uploadStatusText');
+        const toastContainer = document.getElementById('toastContainer');
+
+        function showToast(type, title, message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = `
+                <div class="toast-title">
+                    <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i>
+                    <span>${title}</span>
+                </div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+
+        triggerUploadBtn.addEventListener('click', () => {
+            excelFileInput.click();
+        });
+
+        excelFileInput.addEventListener('change', async () => {
+            const file = excelFileInput.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            uploadStatusText.textContent = 'Mengupload ' + file.name + '...';
+            uploadStatusText.style.color = '#0f172a';
+            uploadStatusText.style.background = 'rgba(14, 165, 233, 0.10)';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('{{ url("/api/water-balance/import") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': uploadToken,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || result.success === false) {
+                    throw new Error(result.message || 'Import gagal.');
+                }
+
+                const summary = result.summary || { created: 0, updated: 0, skipped: 0 };
+                const summaryText = 'Baru: ' + summary.created + ', Update: ' + summary.updated + ', Lewat: ' + summary.skipped;
+                uploadStatusText.textContent = 'Import berhasil | ' + summaryText;
+                uploadStatusText.style.color = '#166534';
+                uploadStatusText.style.background = 'rgba(34, 197, 94, 0.10)';
+                showToast('success', 'Import berhasil', result.message + ' (' + summaryText + ')');
+
+                setTimeout(() => {
+                    if (typeof onPGChange === 'function') {
+                        onPGChange();
+                    }
+                    if (typeof onLokasiChange === 'function') {
+                        onLokasiChange();
+                    }
+                }, 500);
+            } catch (error) {
+                const errMessage = error.message || 'Import gagal.';
+                uploadStatusText.textContent = errMessage;
+                uploadStatusText.style.color = '#b91c1c';
+                uploadStatusText.style.background = 'rgba(239, 68, 68, 0.10)';
+                showToast('error', 'Import gagal', errMessage);
+            } finally {
+                excelFileInput.value = '';
+            }
+        });
+    </script>
 </body>
 </html>

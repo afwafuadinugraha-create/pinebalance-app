@@ -10,13 +10,52 @@ use Carbon\Carbon;
 
 class WaterBalanceImport implements ToCollection, WithHeadingRow
 {
+    public int $created = 0;
+
+    public int $updated = 0;
+
+    public int $skipped = 0;
+
+    public array $requiredColumns = [
+        'pg',
+        'lokasi',
+        'tanggal',
+        'rainfall_mm',
+        'irigasi_mm',
+        'evapotranspirasi_mm',
+    ];
+
     public function collection(Collection $rows): void
     {
-        // Kelompokkan data berdasarkan PG dan Lokasi yang dibersihkan dari awalan kata "PG" atau "Lokasi"
+        $headers = [];
+        foreach ($rows as $row) {
+            if ($row === null || !is_array($row) && !($row instanceof \ArrayAccess)) {
+                continue;
+            }
+
+            foreach ($row->keys() as $key) {
+                $headers[] = $key;
+            }
+
+            break;
+        }
+
+        $headerSet = array_map(fn ($header) => $this->normalizeKey($header), $headers);
+        $missing = [];
+        foreach ($this->requiredColumns as $column) {
+            if (!in_array($this->normalizeKey($column), $headerSet, true) && !in_array($this->normalizeKey(str_replace('_mm', '', $column)), $headerSet, true)) {
+                $missing[] = $column;
+            }
+        }
+
+        if ($missing !== []) {
+            throw new \InvalidArgumentException('Kolom Excel yang dibutuhkan tidak ditemukan: ' . implode(', ', $missing));
+        }
+
         $grouped = $rows->groupBy(function ($item) {
             $rawPg = $this->getValue($item, ['pg', 'PG', 'pabrik_gula']);
             $rawLokasi = $this->getValue($item, ['lokasi', 'Lokasi', 'lokasi_blok', 'blok']);
-            
+
             $cleanPg = trim(preg_replace('/^pg\s*/i', '', $rawPg));
             $cleanLokasi = trim(preg_replace('/^lokasi\s*/i', '', $rawLokasi));
 
@@ -24,12 +63,10 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
         });
 
         foreach ($grouped as $key => $groupRows) {
-            // Urutkan data berdasarkan tanggal secara kronologis
             $sortedRows = $groupRows->sortBy(function ($item) {
                 return $this->transformDate($this->getValue($item, ['tanggal', 'Tanggal', 'date', 'tgl']));
             });
 
-            // Standar awal neraca air dimulai dari Field Capacity (105.00 mm)
             $previousWB = 105.00;
 
             foreach ($sortedRows as $row) {
@@ -37,17 +74,22 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                 $rawPg = $this->getValue($row, ['pg', 'PG', 'pabrik_gula']);
                 $rawLokasi = $this->getValue($row, ['lokasi', 'Lokasi', 'lokasi_blok', 'blok']);
 
-                if (!$tanggal || !$rawPg || !$rawLokasi) continue;
+                if (!$tanggal || !$rawPg || !$rawLokasi) {
+                    $this->skipped++;
+                    continue;
+                }
 
-                // Pembersihan nilai agar tersimpan murni tanpa kata "PG" / "Lokasi"
                 $pg = trim(preg_replace('/^pg\s*/i', '', $rawPg));
                 $lokasi = trim(preg_replace('/^lokasi\s*/i', '', $rawLokasi));
 
-                // 1. Pembacaan Parameter Input
+                if ($pg === '' || $lokasi === '') {
+                    $this->skipped++;
+                    continue;
+                }
+
                 $rainfall = floatval($this->getValue($row, ['rainfall_mm', 'rainfall', 'curah_hujan', 'hujan_mm', 'hujan', 'rf_mm', 'rf']));
                 $irigasi = floatval($this->getValue($row, ['irigasi_mm', 'irigasi', 'siram_mm', 'siram', 'irrigation_mm', 'irrigation']));
                 $luasRencana = $this->parseAreaValue($this->getValue($row, [
-                    'luas_siram_rencana_netto_ha',
                     'luas_siram_rencana_netto_ha',
                     'luas_siram_rencana_ha',
                     'luas_siram_rencana',
@@ -65,22 +107,25 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     'real_ha',
                     'real',
                 ]));
-                
-                // Evapotranspirasi (ET)
+
                 $evapotranspirasi = floatval($this->getValue($row, [
-                    'evapotranspirasi_mm_day', 
-                    'evapotranspirasi_mm', 
-                    'evapotranspirasi', 
+                    'evapotranspirasi_mm_day',
+                    'evapotranspirasi_mm',
+                    'evapotranspirasi',
                     'evapotranspirasi_mmday',
                     'evapotranspirasi_day',
                     'et_mm_day',
-                    'et_mm', 
-                    'et', 
-                    'etc', 
-                    'eto'
+                    'et_mm',
+                    'et',
+                    'etc',
+                    'eto',
                 ]));
 
-                // 2. Kalkulasi Irigasi Efektif
+                if ($tanggal === null || $this->getValue($row, ['tanggal', 'Tanggal', 'date', 'tgl']) === null) {
+                    $this->skipped++;
+                    continue;
+                }
+
                 $irigasiEfektif = 0;
                 if ($luasRencana > 0 && $luasReal > 0) {
                     $irigasiEfektif = ($luasReal / $luasRencana) * $irigasi;
@@ -88,11 +133,8 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     $irigasiEfektif = $irigasi;
                 }
 
-                // 3. Kalkulasi Neraca Air Harian
-                // WB Hari Ini = WB Hari Sebelumnya + Hujan + Irigasi Efektif - Evapotranspirasi
                 $currentWB = $previousWB + $rainfall + $irigasiEfektif - $evapotranspirasi;
 
-                // 4. Penerapan Konsep Batas FC (105 mm) & WP (54 mm)
                 if ($currentWB > 105.00) {
                     $currentWB = 105.00;
                 }
@@ -100,7 +142,6 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     $currentWB = 54.00;
                 }
 
-                // 5. Penentuan Status Zone
                 $statusZone = 'FC - MAD 50%';
                 if ($currentWB >= 105.00) {
                     $statusZone = 'At FC';
@@ -112,7 +153,11 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     $statusZone = 'At WP';
                 }
 
-                // 6. Simpan atau Perbarui Data di MySQL
+                $exists = DailyWaterBalance::where('pg', $pg)
+                    ->where('lokasi', $lokasi)
+                    ->where('tanggal', $tanggal)
+                    ->exists();
+
                 DailyWaterBalance::updateOrCreate(
                     [
                         'pg' => $pg,
@@ -131,9 +176,24 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     ]
                 );
 
+                if ($exists) {
+                    $this->updated++;
+                } else {
+                    $this->created++;
+                }
+
                 $previousWB = $currentWB;
             }
         }
+    }
+
+    public function getSummary(): array
+    {
+        return [
+            'created' => $this->created,
+            'updated' => $this->updated,
+            'skipped' => $this->skipped,
+        ];
     }
 
     private function getValue($row, array $keys)
