@@ -429,10 +429,10 @@
             </div>
 
             <div class="upload-actions">
-                <a href="{{ url('/api/water-balance/template') }}" class="upload-button" style="text-decoration: none; background: linear-gradient(135deg, #16a34a, #22c55e);">
+                <button type="button" id="exportDataBtn" class="upload-button" style="background: linear-gradient(135deg, #16a34a, #22c55e);">
                     <i class="fa-solid fa-download"></i>
-                    Template Excel
-                </a>
+                    Export Data
+                </button>
                 <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" hidden>
                 <button type="button" id="triggerUploadBtn" class="upload-button">
                     <i class="fa-solid fa-file-excel"></i>
@@ -663,6 +663,7 @@
         const uploadToken = '{{ csrf_token() }}';
         const excelFileInput = document.getElementById('excelFileInput');
         const triggerUploadBtn = document.getElementById('triggerUploadBtn');
+        const exportDataBtn = document.getElementById('exportDataBtn');
         const uploadStatusText = document.getElementById('uploadStatusText');
         const toastContainer = document.getElementById('toastContainer');
 
@@ -686,6 +687,16 @@
 
         triggerUploadBtn.addEventListener('click', () => {
             excelFileInput.click();
+        });
+
+        exportDataBtn.addEventListener('click', () => {
+            const selectedPG = document.getElementById('selectPG')?.value || '';
+            const exportUrl = selectedPG
+                ? '{{ url("/api/water-balance/export") }}?pg=' + encodeURIComponent(selectedPG)
+                : '{{ url("/api/water-balance/export") }}';
+
+            window.location.href = exportUrl;
+            showToast('success', 'Export data', 'File CSV sedang diunduh.');
         });
 
         excelFileInput.addEventListener('change', async () => {
