@@ -153,6 +153,110 @@
             color: #0284c7;
             margin-top: 2px;
         }
+
+        @media (max-width: 1024px) {
+            body {
+                display: block !important;
+                overflow-x: hidden;
+            }
+
+            .sidebar {
+                position: relative !important;
+                width: 100% !important;
+                height: auto !important;
+                border-right: none !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+                padding: 18px 16px !important;
+            }
+
+            .main-wrapper {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding: 16px !important;
+                border-radius: 18px !important;
+            }
+
+            .dashboard-charts-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            .pie-container-flex {
+                flex-direction: column !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main-wrapper {
+                padding: 12px !important;
+            }
+
+            .top-bar {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+                padding: 16px !important;
+            }
+
+            .top-bar h1 {
+                font-size: 18px !important;
+                line-height: 1.3 !important;
+            }
+
+            .card {
+                padding: 16px !important;
+                border-radius: 16px !important;
+            }
+
+            .card-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .kpi-card {
+                padding: 14px 12px !important;
+            }
+
+            .kpi-value {
+                font-size: 18px !important;
+            }
+
+            .pie-container-flex {
+                gap: 12px !important;
+            }
+
+            .pie-chart-box {
+                width: min(220px, 100%) !important;
+                height: 220px !important;
+            }
+
+            .pie-details-legend {
+                grid-template-columns: 1fr !important;
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            .nav-menu {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+            }
+
+            .filter-card {
+                margin-top: 16px !important;
+            }
+
+            .brand-header {
+                align-items: flex-start !important;
+            }
+        }
     </style>
 </head>
 <body>
