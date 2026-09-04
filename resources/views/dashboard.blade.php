@@ -729,7 +729,7 @@
         </div>
     </main>
 
-    <script src="{{ asset('js/app.js') }}"></script>
+    <script src="{{ asset('js/app.js') }}?v={{ filemtime(public_path('js/app.js')) }}"></script>
     <script>
         const uploadToken = '{{ csrf_token() }}';
         const excelFileInput = document.getElementById('excelFileInput');
