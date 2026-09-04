@@ -408,18 +408,18 @@ function renderAllPgSummary() {
             }
 
             const totalLokasi = summaryList.reduce((total, item) => total + parseInt(item.total_lokasi || 0), 0);
-            const totalHari = summaryList.reduce((total, item) => total + parseInt(item.total_hari || 0), 0);
             const totalWp = summaryList.reduce((total, item) => total + parseInt(item.count_wp || 0), 0);
+            const totalLokasiWp = summaryList.reduce((total, item) => total + parseInt(item.lokasi_wp || 0), 0);
 
             document.getElementById('allPgTotal').textContent = summaryList.length;
             document.getElementById('allLokasiTotal').textContent = totalLokasi;
-            document.getElementById('allHariTotal').textContent = totalHari;
+            document.getElementById('allLokasiWpTotal').textContent = totalLokasiWp;
             document.getElementById('allWpTotal').textContent = totalWp;
             document.getElementById('allPgStatusBadge').innerHTML = '<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Data terhubung';
 
             const tbody = document.getElementById('allPgSummaryBody');
             if (!summaryList.length) {
-                tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state-box"><i class="fa-solid fa-folder-open"></i><p>Belum ada data water balance.</p></div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state-box"><i class="fa-solid fa-folder-open"></i><p>Belum ada data water balance.</p></div></td></tr>';
                 return;
             }
 
@@ -431,7 +431,6 @@ function renderAllPgSummary() {
                     <td style="text-align: center; font-weight: 800;">${index + 1}</td>
                     <td style="font-weight: 700;">PG ${cleanPg}</td>
                     <td style="text-align: center;">${item.total_lokasi}</td>
-                    <td style="text-align: center;">${item.total_hari}</td>
                     <td style="text-align: center; color: #15803d; font-weight: 700;">${item.count_fc}</td>
                     <td style="text-align: center; color: #2563eb; font-weight: 700;">${item.count_fc_mad}</td>
                     <td style="text-align: center; color: #a16207; font-weight: 700;">${item.count_mad_wp}</td>

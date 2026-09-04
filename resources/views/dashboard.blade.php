@@ -470,8 +470,8 @@
                         <div><span class="kpi-title">Total Lokasi</span><div class="kpi-value" id="allLokasiTotal">0</div></div>
                     </div>
                     <div class="kpi-card kpi-gold">
-                        <div class="kpi-icon-box"><i class="fa-solid fa-calendar-days"></i></div>
-                        <div><span class="kpi-title">Total Hari Data</span><div class="kpi-value" id="allHariTotal">0</div></div>
+                        <div class="kpi-icon-box"><i class="fa-solid fa-location-crosshairs"></i></div>
+                        <div><span class="kpi-title">Lokasi Pernah WP</span><div class="kpi-value" id="allLokasiWpTotal">0</div></div>
                     </div>
                     <div class="kpi-card kpi-red">
                         <div class="kpi-icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -490,8 +490,7 @@
                             <tr>
                                 <th style="width: 60px; text-align: center;">Rank</th>
                                 <th>PG</th>
-                                <th style="text-align: center;">Lokasi</th>
-                                <th style="text-align: center;">Total Hari</th>
+                                <th style="text-align: center;">Total Lokasi</th>
                                 <th style="text-align: center;">Air Penuh</th>
                                 <th style="text-align: center;">Aman</th>
                                 <th style="text-align: center;">Waspada</th>
@@ -499,7 +498,7 @@
                             </tr>
                         </thead>
                         <tbody id="allPgSummaryBody">
-                            <tr><td colspan="8"><div class="empty-state-box"><i class="fa-solid fa-spinner fa-spin"></i><p>Memuat ringkasan seluruh PG...</p></div></td></tr>
+                            <tr><td colspan="7"><div class="empty-state-box"><i class="fa-solid fa-spinner fa-spin"></i><p>Memuat ringkasan seluruh PG...</p></div></td></tr>
                         </tbody>
                     </table>
                 </div>
