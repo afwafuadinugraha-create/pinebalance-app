@@ -439,12 +439,55 @@ function renderAllPgSummary() {
                 </tr>`;
             }).join('');
 
+            document.getElementById('allPgWpBody').innerHTML = summaryList.map((item, index) => {
+                const cleanPg = item.pg.toString().replace(/^pg\s*/gi, '').trim();
+                return `<tr>
+                    <td style="text-align: center; font-weight: 800;">${index + 1}</td>
+                    <td style="font-weight: 700;">PG ${cleanPg}</td>
+                    <td style="text-align: center; color: #b91c1c; font-weight: 800;">${item.lokasi_wp}</td>
+                    <td style="text-align: center; color: #b91c1c; font-weight: 800;">${item.count_wp}</td>
+                    <td style="text-align: center;">${item.lokasi_wp_terlama ? 'Lokasi ' + item.lokasi_wp_terlama : '-'}</td>
+                    <td style="text-align: center; font-weight: 800;">${item.hari_wp_terlama} hari</td>
+                </tr>`;
+            }).join('');
+
             renderAllPgChart(summaryList);
+            renderAllPgIrrigation();
         })
         .catch(error => {
             document.getElementById('allPgStatusBadge').innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color: #ef4444;"></i> Gagal memuat data';
             console.error('Error fetching all PG summary:', error);
         });
+}
+
+function renderAllPgIrrigation() {
+    fetch('/api/pg-irrigation-monthly-all')
+        .then(response => response.json())
+        .then(result => {
+            const months = result.months || [];
+            const report = result.report || {};
+            const header = document.getElementById('allPgIrrigationHeader');
+            const tbody = document.getElementById('allPgIrrigationBody');
+
+            header.innerHTML = '<th>PG</th>' + months.map(month => `<th style="text-align: center;">${formatMonthName(month)}</th>`).join('') + '<th style="text-align: center; color: #0284c7;">Total Siram</th>';
+            const pgs = Object.keys(report);
+            if (!pgs.length) {
+                tbody.innerHTML = `<tr><td colspan="${months.length + 2}"><div class="empty-state-box"><i class="fa-solid fa-folder-open"></i><p>Belum ada data frekuensi siram.</p></div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = pgs.map(pg => {
+                let total = 0;
+                const cells = months.map(month => {
+                    const count = report[pg][month] || 0;
+                    total += count;
+                    return `<td style="text-align: center;">${count > 0 ? count + ' Kali' : '-'}</td>`;
+                }).join('');
+                const cleanPg = pg.toString().replace(/^pg\s*/gi, '').trim();
+                return `<tr><td style="font-weight: 700;">PG ${cleanPg}</td>${cells}<td style="text-align: center; color: #0284c7; font-weight: 800;">${total} Kali</td></tr>`;
+            }).join('');
+        })
+        .catch(error => console.error('Error fetching all PG irrigation:', error));
 }
 
 function renderAllPgChart(summaryList) {

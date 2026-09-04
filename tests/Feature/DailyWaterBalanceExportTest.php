@@ -59,4 +59,32 @@ class DailyWaterBalanceExportTest extends TestCase
             ->assertJsonPath('0.count_fc', 1)
             ->assertJsonPath('0.count_wp', 1);
     }
+
+    public function test_all_pg_irrigation_summary_groups_frequency_by_pg_and_month(): void
+    {
+        DailyWaterBalance::create([
+            'pg' => 'PG-01',
+            'lokasi' => 'Lokasi A',
+            'tanggal' => '2026-09-01',
+            'irigasi_mm' => 20,
+            'water_balance_mm' => 80,
+            'status_zone' => 'FC - MAD 50%',
+        ]);
+
+        DailyWaterBalance::create([
+            'pg' => 'PG-01',
+            'lokasi' => 'Lokasi A',
+            'tanggal' => '2026-09-02',
+            'irigasi_mm' => 0,
+            'water_balance_mm' => 75,
+            'status_zone' => 'MAD 50% - WP',
+        ]);
+
+        $response = $this->getJson('/api/pg-irrigation-monthly-all');
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('months.0', '2026-09')
+            ->assertJsonPath('report.PG-01.2026-09', 1);
+    }
 }

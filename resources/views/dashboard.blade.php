@@ -507,6 +507,46 @@
 
             <section class="card">
                 <div class="card-header">
+                    <div>
+                        <h3><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> Ranking PG Berdasarkan Kondisi WP</h3>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Prioritas ditentukan dari jumlah lokasi yang pernah WP dan durasi WP terlama.</p>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 60px; text-align: center;">Rank</th>
+                                <th>PG</th>
+                                <th style="text-align: center;">Lokasi Pernah WP</th>
+                                <th style="text-align: center;">Total Hari WP</th>
+                                <th style="text-align: center;">Lokasi WP Terlama</th>
+                                <th style="text-align: center;">Durasi Terlama</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allPgWpBody">
+                            <tr><td colspan="6"><div class="empty-state-box"><i class="fa-solid fa-spinner fa-spin"></i><p>Memuat ranking WP...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-droplet" style="color: #0284c7;"></i> Frekuensi Siram Seluruh PG</h3>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr id="allPgIrrigationHeader"><th>PG</th><th style="text-align: center; color: #0284c7;">Total Siram</th></tr></thead>
+                        <tbody id="allPgIrrigationBody">
+                            <tr><td colspan="5"><div class="empty-state-box"><i class="fa-solid fa-spinner fa-spin"></i><p>Memuat frekuensi siram seluruh PG...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
                     <h3><i class="fa-solid fa-chart-bar" style="color: #0284c7;"></i> Perbandingan Status Water Balance Antar-PG</h3>
                 </div>
                 <div style="height: 360px; position: relative;">
