@@ -53,7 +53,7 @@ class WaterBalanceController extends Controller
         $summary = DailyWaterBalance::where('pg', $pg)
             ->select(
                 'lokasi',
-                DB::raw("COUNT(*) as total_hari"),
+                DB::raw('COUNT(*) as total_hari'),
                 DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc"),
                 DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN 1 ELSE 0 END) as count_fc_mad"),
                 DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
@@ -62,6 +62,27 @@ class WaterBalanceController extends Controller
             ->groupBy('lokasi')
             ->orderBy('count_wp', 'desc')
             ->orderBy('count_mad_wp', 'desc')
+            ->get();
+
+        return response()->json($summary);
+    }
+
+    public function getSummaryAllPG()
+    {
+        $summary = DailyWaterBalance::query()
+            ->select(
+                'pg',
+                DB::raw('COUNT(DISTINCT lokasi) as total_lokasi'),
+                DB::raw('COUNT(*) as total_hari'),
+                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc"),
+                DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN 1 ELSE 0 END) as count_fc_mad"),
+                DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
+                DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as count_wp")
+            )
+            ->groupBy('pg')
+            ->orderByDesc('count_wp')
+            ->orderByDesc('count_mad_wp')
+            ->orderBy('pg')
             ->get();
 
         return response()->json($summary);
@@ -85,11 +106,11 @@ class WaterBalanceController extends Controller
 
             $allMonths[$monthKey] = true;
 
-            if (!isset($grouped[$lokasi])) {
+            if (! isset($grouped[$lokasi])) {
                 $grouped[$lokasi] = [];
             }
 
-            if (!isset($grouped[$lokasi][$monthKey])) {
+            if (! isset($grouped[$lokasi][$monthKey])) {
                 $grouped[$lokasi][$monthKey] = 0;
             }
 
@@ -104,7 +125,7 @@ class WaterBalanceController extends Controller
 
         return response()->json([
             'months' => $monthsArray,
-            'report' => $grouped
+            'report' => $grouped,
         ]);
     }
 
@@ -115,20 +136,20 @@ class WaterBalanceController extends Controller
         ]);
 
         try {
-            $importer = new WaterBalanceImport();
+            $importer = new WaterBalanceImport;
             Excel::import($importer, $request->file('file'));
 
             $summary = $importer->getSummary();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data Excel berhasil diproses. ' . $summary['created'] . ' data baru, ' . $summary['updated'] . ' data diperbarui, ' . $summary['skipped'] . ' data dilewati.',
+                'message' => 'Data Excel berhasil diproses. '.$summary['created'].' data baru, '.$summary['updated'].' data diperbarui, '.$summary['skipped'].' data dilewati.',
                 'summary' => $summary,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Import data gagal: ' . $e->getMessage(),
+                'message' => 'Import data gagal: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -137,7 +158,7 @@ class WaterBalanceController extends Controller
     {
         $path = storage_path('app/templates/water-balance-template.csv');
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             abort(404, 'Template import tidak ditemukan.');
         }
 
@@ -174,7 +195,7 @@ class WaterBalanceController extends Controller
             })
             ->toArray();
 
-        $filename = $pg ? 'water-balance-' . preg_replace('/[^a-z0-9]+/i', '-', strtolower($pg)) . '.csv' : 'water-balance-export.csv';
+        $filename = $pg ? 'water-balance-'.preg_replace('/[^a-z0-9]+/i', '-', strtolower($pg)).'.csv' : 'water-balance-export.csv';
 
         $handle = fopen('php://temp', 'w+');
         fputcsv($handle, [
@@ -213,6 +234,6 @@ class WaterBalanceController extends Controller
 
         return response($csv)
             ->header('Content-Type', 'text/csv; charset=UTF-8')
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 }

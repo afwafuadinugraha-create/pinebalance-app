@@ -375,7 +375,11 @@
         </div>
 
         <nav class="nav-menu" style="margin-top: 20px;">
-            <button class="nav-item active" onclick="switchTab('tab-dashboard', this)">
+            <button class="nav-item active" onclick="switchTab('tab-all-pg', this)">
+                <i class="fa-solid fa-globe"></i>
+                <span>Overview All PG</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('tab-dashboard', this)">
                 <i class="fa-solid fa-chart-line"></i>
                 <span>Dashboard Utama</span>
             </button>
@@ -445,8 +449,75 @@
             </div>
         </header>
 
-        <!-- TAB 1: DASHBOARD UTAMA -->
-        <div id="tab-dashboard" class="tab-page active">
+        <!-- TAB 1: OVERVIEW ALL PG -->
+        <div id="tab-all-pg" class="tab-page active">
+            <section class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 style="font-size: 18px; font-weight: 800; color: #0f172a;"><i class="fa-solid fa-globe" style="color: #0284c7;"></i> Overview Water Balance Seluruh PG</h2>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Ringkasan kondisi air untuk menentukan prioritas penanganan antar-PG</p>
+                    </div>
+                    <span id="allPgStatusBadge" class="badge-status-file"><i class="fa-solid fa-database"></i> Memuat data...</span>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card kpi-blue">
+                        <div class="kpi-icon-box"><i class="fa-solid fa-industry"></i></div>
+                        <div><span class="kpi-title">Total PG</span><div class="kpi-value" id="allPgTotal">0</div></div>
+                    </div>
+                    <div class="kpi-card kpi-green">
+                        <div class="kpi-icon-box"><i class="fa-solid fa-location-dot"></i></div>
+                        <div><span class="kpi-title">Total Lokasi</span><div class="kpi-value" id="allLokasiTotal">0</div></div>
+                    </div>
+                    <div class="kpi-card kpi-gold">
+                        <div class="kpi-icon-box"><i class="fa-solid fa-calendar-days"></i></div>
+                        <div><span class="kpi-title">Total Hari Data</span><div class="kpi-value" id="allHariTotal">0</div></div>
+                    </div>
+                    <div class="kpi-card kpi-red">
+                        <div class="kpi-icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div><span class="kpi-title">Hari Kritis (At WP)</span><div class="kpi-value" id="allWpTotal">0</div></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Ranking Kondisi Air Antar-PG</h3>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 60px; text-align: center;">Rank</th>
+                                <th>PG</th>
+                                <th style="text-align: center;">Lokasi</th>
+                                <th style="text-align: center;">Total Hari</th>
+                                <th style="text-align: center;">Air Penuh</th>
+                                <th style="text-align: center;">Aman</th>
+                                <th style="text-align: center;">Waspada</th>
+                                <th style="text-align: center;">Kritis</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allPgSummaryBody">
+                            <tr><td colspan="8"><div class="empty-state-box"><i class="fa-solid fa-spinner fa-spin"></i><p>Memuat ringkasan seluruh PG...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-chart-bar" style="color: #0284c7;"></i> Perbandingan Status Water Balance Antar-PG</h3>
+                </div>
+                <div style="height: 360px; position: relative;">
+                    <div class="empty-state-box" id="emptyAllPgChartState"><i class="fa-solid fa-chart-simple"></i><p>Belum ada data untuk ditampilkan.</p></div>
+                    <canvas id="allPgChart" style="display: none;"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB 2: DASHBOARD UTAMA -->
+        <div id="tab-dashboard" class="tab-page">
             <div class="card">
                 <div class="card-header">
                     <div style="display: flex; align-items: center; gap: 14px;">
@@ -546,7 +617,7 @@
             </div>
         </div>
 
-        <!-- TAB 2: RINCIAN DATA -->
+        <!-- TAB 3: RINCIAN DATA -->
         <div id="tab-rawdata" class="tab-page">
             <section class="card">
                 <div class="card-header">
@@ -580,7 +651,7 @@
             </section>
         </div>
 
-        <!-- TAB 3: SUMMARY & ANALYTICS -->
+        <!-- TAB 4: SUMMARY & ANALYTICS -->
         <div id="tab-summary" class="tab-page">
             <section class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">

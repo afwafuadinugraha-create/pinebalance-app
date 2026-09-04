@@ -1,6 +1,7 @@
 let waterBalanceChartInstance = null;
 let statusPieChartInstance = null;
 let compareBarChartInstance = null;
+let allPgChartInstance = null;
 
 function formatDateCustom(dateString) {
     if (!dateString) return '';
@@ -397,3 +398,82 @@ function renderPGMonthlyIrrigationTable(pg) {
         })
         .catch(err => console.error('Error fetching PG monthly irrigation:', err));
 }
+
+function renderAllPgSummary() {
+    fetch('/api/pg-summary-all')
+        .then(response => response.json())
+        .then(summaryList => {
+            if (!Array.isArray(summaryList)) {
+                throw new Error('Format ringkasan tidak valid');
+            }
+
+            const totalLokasi = summaryList.reduce((total, item) => total + parseInt(item.total_lokasi || 0), 0);
+            const totalHari = summaryList.reduce((total, item) => total + parseInt(item.total_hari || 0), 0);
+            const totalWp = summaryList.reduce((total, item) => total + parseInt(item.count_wp || 0), 0);
+
+            document.getElementById('allPgTotal').textContent = summaryList.length;
+            document.getElementById('allLokasiTotal').textContent = totalLokasi;
+            document.getElementById('allHariTotal').textContent = totalHari;
+            document.getElementById('allWpTotal').textContent = totalWp;
+            document.getElementById('allPgStatusBadge').innerHTML = '<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Data terhubung';
+
+            const tbody = document.getElementById('allPgSummaryBody');
+            if (!summaryList.length) {
+                tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state-box"><i class="fa-solid fa-folder-open"></i><p>Belum ada data water balance.</p></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = summaryList.map((item, index) => {
+                const cleanPg = item.pg.toString().replace(/^pg\s*/gi, '').trim();
+                const criticalStyle = parseInt(item.count_wp || 0) > 0 ? ' style="background: #fef2f2;"' : '';
+
+                return `<tr${criticalStyle}>
+                    <td style="text-align: center; font-weight: 800;">${index + 1}</td>
+                    <td style="font-weight: 700;">PG ${cleanPg}</td>
+                    <td style="text-align: center;">${item.total_lokasi}</td>
+                    <td style="text-align: center;">${item.total_hari}</td>
+                    <td style="text-align: center; color: #15803d; font-weight: 700;">${item.count_fc}</td>
+                    <td style="text-align: center; color: #2563eb; font-weight: 700;">${item.count_fc_mad}</td>
+                    <td style="text-align: center; color: #a16207; font-weight: 700;">${item.count_mad_wp}</td>
+                    <td style="text-align: center; color: #b91c1c; font-weight: 800;">${item.count_wp}</td>
+                </tr>`;
+            }).join('');
+
+            renderAllPgChart(summaryList);
+        })
+        .catch(error => {
+            document.getElementById('allPgStatusBadge').innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color: #ef4444;"></i> Gagal memuat data';
+            console.error('Error fetching all PG summary:', error);
+        });
+}
+
+function renderAllPgChart(summaryList) {
+    const canvas = document.getElementById('allPgChart');
+    const emptyState = document.getElementById('emptyAllPgChartState');
+    if (!canvas || !summaryList.length) return;
+
+    emptyState.style.display = 'none';
+    canvas.style.display = 'block';
+    if (allPgChartInstance) allPgChartInstance.destroy();
+
+    allPgChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: summaryList.map(item => `PG ${item.pg.toString().replace(/^pg\s*/gi, '').trim()}`),
+            datasets: [
+                { label: 'Air Penuh (FC)', data: summaryList.map(item => parseInt(item.count_fc)), backgroundColor: '#22c55e' },
+                { label: 'Kondisi Aman', data: summaryList.map(item => parseInt(item.count_fc_mad)), backgroundColor: '#3b82f6' },
+                { label: 'Waspada', data: summaryList.map(item => parseInt(item.count_mad_wp)), backgroundColor: '#eab308' },
+                { label: 'Kritis (At WP)', data: summaryList.map(item => parseInt(item.count_wp)), backgroundColor: '#ef4444' }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Jumlah Hari' } } },
+            plugins: { legend: { display: true, position: 'top' } }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', renderAllPgSummary);

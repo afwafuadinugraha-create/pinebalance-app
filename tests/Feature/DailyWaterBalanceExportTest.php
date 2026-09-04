@@ -30,4 +30,33 @@ class DailyWaterBalanceExportTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_all_pg_summary_groups_locations_and_statuses(): void
+    {
+        DailyWaterBalance::create([
+            'pg' => 'PG-01',
+            'lokasi' => 'Lokasi A',
+            'tanggal' => '2026-09-01',
+            'water_balance_mm' => 105,
+            'status_zone' => 'At FC',
+        ]);
+
+        DailyWaterBalance::create([
+            'pg' => 'PG-01',
+            'lokasi' => 'Lokasi B',
+            'tanggal' => '2026-09-01',
+            'water_balance_mm' => 54,
+            'status_zone' => 'At WP',
+        ]);
+
+        $response = $this->getJson('/api/pg-summary-all');
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('0.pg', 'PG-01')
+            ->assertJsonPath('0.total_lokasi', 2)
+            ->assertJsonPath('0.total_hari', 2)
+            ->assertJsonPath('0.count_fc', 1)
+            ->assertJsonPath('0.count_wp', 1);
+    }
 }
