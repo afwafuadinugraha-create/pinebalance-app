@@ -163,8 +163,8 @@ function renderLineChart(rows) {
                     type: 'bar',
                     label: 'Curah Hujan (mm)',
                     data: dataRainfall,
-                    backgroundColor: 'rgba(249, 115, 22, 0.72)',
-                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(56, 189, 248, 0.72)',
+                    borderColor: '#0284c7',
                     borderWidth: 1,
                     maxBarThickness: 14,
                     order: 3
@@ -174,7 +174,7 @@ function renderLineChart(rows) {
                     label: 'Irigasi (mm)',
                     data: dataIrrigation,
                     backgroundColor: 'rgba(250, 204, 21, 0.78)',
-                    borderColor: '#eab308',
+                    borderColor: '#ca8a04',
                     borderWidth: 1,
                     maxBarThickness: 14,
                     order: 2
