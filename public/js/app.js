@@ -130,6 +130,8 @@ function renderLineChart(rows) {
 
     const labels = rows.map(r => formatDateCustom(r.tanggal));
     const dataWB = rows.map(r => parseFloat(r.water_balance_mm));
+    const dataRainfall = rows.map(r => parseFloat(r.rainfall_mm) || 0);
+    const dataIrrigation = rows.map(r => parseFloat(r.irigasi_mm) || 0);
 
     const pointColors = dataWB.map(val => {
         if (val >= 105.0) return '#22c55e';
@@ -158,6 +160,27 @@ function renderLineChart(rows) {
             labels: labels,
             datasets: [
                 {
+                    type: 'bar',
+                    label: 'Curah Hujan (mm)',
+                    data: dataRainfall,
+                    backgroundColor: 'rgba(249, 115, 22, 0.72)',
+                    borderColor: '#f97316',
+                    borderWidth: 1,
+                    maxBarThickness: 14,
+                    order: 3
+                },
+                {
+                    type: 'bar',
+                    label: 'Irigasi (mm)',
+                    data: dataIrrigation,
+                    backgroundColor: 'rgba(250, 204, 21, 0.78)',
+                    borderColor: '#eab308',
+                    borderWidth: 1,
+                    maxBarThickness: 14,
+                    order: 2
+                },
+                {
+                    type: 'line',
                     label: 'Water Balance (mm)',
                     data: dataWB,
                     borderColor: '#0284c7',
@@ -170,7 +193,8 @@ function renderLineChart(rows) {
                     pointBackgroundColor: pointColors,
                     pointBorderColor: pointColors,
                     pointHoverBackgroundColor: pointColors,
-                    pointHoverBorderColor: '#ffffff'
+                    pointHoverBorderColor: '#ffffff',
+                    order: 1
                 },
                 { label: 'FC (105)', data: lineFC, borderColor: '#22c55e', borderWidth: 1.5, borderDash: [5, 5], pointRadius: 0, fill: false },
                 { label: 'MAD 50% (80)', data: lineMAD, borderColor: '#eab308', borderWidth: 1.5, borderDash: [5, 5], pointRadius: 0, fill: false },
