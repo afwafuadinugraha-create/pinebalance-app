@@ -170,6 +170,8 @@ class WaterBalanceController extends Controller
                     'evapotranspirasi_mm' => $row->evapotranspirasi_mm,
                     'water_balance_mm' => $row->water_balance_mm,
                     'status_zone' => $row->status_zone,
+                    'status_harian' => $row->status_harian,
+                    'status_keterangan' => $row->status_keterangan,
                 ];
             })
             ->toArray();
@@ -189,6 +191,8 @@ class WaterBalanceController extends Controller
             'evapotranspirasi_mm',
             'water_balance_mm',
             'status_zone',
+            'status_harian',
+            'status_keterangan',
         ]);
 
         foreach ($data as $row) {
@@ -204,6 +208,8 @@ class WaterBalanceController extends Controller
                 $row['evapotranspirasi_mm'],
                 $row['water_balance_mm'],
                 $row['status_zone'],
+                $row['status_harian'],
+                $row['status_keterangan'],
             ]);
         }
 

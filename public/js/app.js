@@ -132,6 +132,7 @@ function renderLineChart(rows) {
     const dataWB = rows.map(r => parseFloat(r.water_balance_mm));
     const dataRainfall = rows.map(r => parseFloat(r.rainfall_mm) || 0);
     const dataIrrigation = rows.map(r => parseFloat(r.irigasi_mm) || 0);
+    const dailyStatuses = rows.map(r => r.status_harian || '');
 
     const pointColors = dataWB.map(val => {
         if (val >= 105.0) return '#22c55e';
@@ -153,6 +154,30 @@ function renderLineChart(rows) {
     gradientWater.addColorStop(0, 'rgba(2, 132, 199, 0.35)');
     gradientWater.addColorStop(0.5, 'rgba(56, 189, 248, 0.15)');
     gradientWater.addColorStop(1, 'rgba(224, 242, 254, 0.02)');
+
+    const statusLabelPlugin = {
+        id: 'dailyStatusLabels',
+        afterDatasetsDraw(chart) {
+            const meta = chart.getDatasetMeta(2);
+            const points = meta?.data || [];
+            const context = chart.ctx;
+
+            context.save();
+            context.font = '700 10px Plus Jakarta Sans';
+            context.textAlign = 'center';
+            context.textBaseline = 'bottom';
+
+            points.forEach((point, index) => {
+                const status = dailyStatuses[index];
+                if (!status) return;
+
+                context.fillStyle = status.toLowerCase() === 'bongkar' ? '#b45309' : '#be123c';
+                context.fillText(status, point.x, point.y - 10);
+            });
+
+            context.restore();
+        }
+    };
 
     waterBalanceChartInstance = new Chart(ctx, {
         type: 'line',
@@ -204,12 +229,28 @@ function renderLineChart(rows) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: true, position: 'top' } },
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        afterBody(items) {
+                            const row = rows[items[0]?.dataIndex];
+                            if (!row?.status_harian) return [];
+
+                            return [
+                                `Status: ${row.status_harian}`,
+                                row.status_keterangan ? `Catatan: ${row.status_keterangan}` : ''
+                            ].filter(Boolean);
+                        }
+                    }
+                }
+            },
             scales: {
                 y: { title: { display: true, text: 'Water Balance (mm)' }, min: 0, max: 120 },
                 x: { ticks: { maxRotation: 45, minRotation: 45 } }
             }
-        }
+        },
+        plugins: [statusLabelPlugin]
     });
 }
 
@@ -273,6 +314,8 @@ function renderRawDataTable(rows) {
         if (r.status_zone === 'At WP') badgeColor = '#ef4444';
 
         const tr = document.createElement('tr');
+        const dailyStatus = r.status_harian || '-';
+        const dailyStatusColor = dailyStatus.toLowerCase() === 'bongkar' ? '#b45309' : '#be123c';
         tr.innerHTML = `
             <td>${formatDateCustom(r.tanggal)}</td>
             <td>${parseFloat(r.rainfall_mm).toFixed(2)}</td>
@@ -281,6 +324,7 @@ function renderRawDataTable(rows) {
             <td>${parseFloat(r.evapotranspirasi_mm).toFixed(2)}</td>
             <td style="font-weight:700; color: #0f172a;">${parseFloat(r.water_balance_mm).toFixed(2)}</td>
             <td><span style="background:${badgeColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${r.status_zone}</span></td>
+            <td><span style="background:${dailyStatus === '-' ? '#cbd5e1' : dailyStatusColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${dailyStatus}</span>${r.status_keterangan ? `<br><small style="color:#64748b;">${r.status_keterangan}</small>` : ''}</td>
         `;
         tbody.appendChild(tr);
     });

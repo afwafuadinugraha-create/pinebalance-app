@@ -563,11 +563,12 @@
                                 <th>Evapotranspirasi (mm/day)</th>
                                 <th>Water Balance (mm)</th>
                                 <th>Status Zone</th>
+                                <th>Prioritas / Status</th>
                             </tr>
                         </thead>
                         <tbody id="excelTableBody">
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="empty-state-box">
                                         <i class="fa-solid fa-folder-open"></i>
                                         <p>Silakan pilih lokasi pada filter control.</p>

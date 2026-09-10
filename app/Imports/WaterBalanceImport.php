@@ -120,6 +120,12 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     'etc',
                     'eto',
                 ]));
+                $statusHarian = $this->normalizeDailyStatus($this->getExactValue($row, [
+                    'status_harian', 'status_operasi', 'prioritas_siram', 'prioritas', 'status', 'bongkar',
+                ]));
+                $statusKeterangan = $this->nullableString($this->getExactValue($row, [
+                    'status_keterangan', 'keterangan_status', 'alasan', 'catatan',
+                ]));
 
                 if ($tanggal === null || $this->getValue($row, ['tanggal', 'Tanggal', 'date', 'tgl']) === null) {
                     $this->skipped++;
@@ -173,6 +179,8 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                         'evapotranspirasi_mm' => $evapotranspirasi,
                         'water_balance_mm' => $currentWB,
                         'status_zone' => $statusZone,
+                        'status_harian' => $statusHarian,
+                        'status_keterangan' => $statusKeterangan,
                     ]
                 );
 
@@ -215,6 +223,19 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
         return null;
     }
 
+    private function getExactValue($row, array $keys)
+    {
+        $normalizedKeys = array_map(fn ($key) => $this->normalizeKey($key), $keys);
+
+        foreach ($row as $rowKey => $value) {
+            if (in_array($this->normalizeKey($rowKey), $normalizedKeys, true)) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
     private function normalizeKey($value)
     {
         if ($value === null) {
@@ -238,6 +259,32 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
         }
 
         return floatval($value);
+    }
+
+    private function normalizeDailyStatus($value): ?string
+    {
+        $status = trim((string) ($value ?? ''));
+
+        if ($status === '') {
+            return null;
+        }
+
+        if (preg_match('/^p\s*(\d+)$/i', $status, $matches)) {
+            return 'P' . $matches[1];
+        }
+
+        if (preg_match('/^b(ongkar)?$/i', $status)) {
+            return 'Bongkar';
+        }
+
+        return $status;
+    }
+
+    private function nullableString($value): ?string
+    {
+        $text = trim((string) ($value ?? ''));
+
+        return $text === '' ? null : $text;
     }
 
     private function transformDate($value)
