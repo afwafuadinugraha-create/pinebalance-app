@@ -12,7 +12,7 @@
 
     <style>
         body {
-            background: linear-gradient(135deg, #e0f7ff 0%, #f8fdff 52%, #fff7ed 100%) !important;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #e2e8f0 100%) !important;
             background-attachment: fixed !important;
             font-family: 'Plus Jakarta Sans', sans-serif;
             margin: 0;
@@ -33,54 +33,55 @@
             display: flex;
             flex-direction: column;
 
-            background: linear-gradient(rgba(255, 255, 255, 0.90), rgba(239, 250, 255, 0.96)),
+            background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.80)), 
                         url('{{ asset("images/Produk Unggulan PT GGP-min.jpeg") }}') !important;
             background-size: cover !important;
             background-position: center !important;
-            border-right: 1px solid #b9e3f2;
-            box-shadow: 4px 0 24px rgba(14, 116, 144, 0.12);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
         }
 
-        .sidebar .brand-text h2 { color: #123047 !important; }
-        .sidebar .brand-text p { color: #0284c7 !important; }
+        .sidebar .brand-text h2 { color: #ffffff !important; }
+        .sidebar .brand-text p { color: #38bdf8 !important; }
 
         .sidebar .nav-item {
-            color: #36566a !important;
-            background: rgba(255, 255, 255, 0.78);
-            border: 1px solid #d5edf5;
+            color: #e2e8f0 !important;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(4px);
             margin-bottom: 8px;
             transition: all 0.3s ease;
         }
 
         .sidebar .nav-item:hover {
-            background: #e0f7ff !important;
-            color: #075985 !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: #ffffff !important;
         }
 
         .sidebar .nav-item.active {
-            background: #0ea5e9 !important;
+            background: #0284c7 !important;
             color: #ffffff !important;
-            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.24);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
             border: none;
         }
 
         .sidebar .filter-card {
-            background: rgba(255, 255, 255, 0.98) !important;
+            background: rgba(255, 255, 255, 0.94) !important;
             backdrop-filter: blur(8px);
             border-radius: 16px;
             padding: 16px;
             margin-top: auto !important;
-            border: 1px solid #cfe8f3;
-            box-shadow: 0 8px 20px rgba(14, 116, 144, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
 
-        .sidebar .filter-header { color: #075985 !important; font-weight: 800; }
-        .sidebar .filter-group label { color: #36566a !important; font-weight: 700; }
+        .sidebar .filter-header { color: #0f172a !important; font-weight: 800; }
+        .sidebar .filter-group label { color: #334155 !important; font-weight: 700; }
 
         .main-wrapper {
             margin-left: 280px !important;
             width: calc(100% - 300px) !important;
-            background: rgba(255, 255, 255, 0.76);
+            background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(12px);
             border-radius: 20px;
             padding: 24px;
