@@ -451,12 +451,13 @@ function renderPGMonthlyIrrigationTable(pg) {
                 let rowHTML = `<td style="font-weight: 700;">PG ${cleanPG} - Lokasi ${cleanLokasi}</td>`;
 
                 months.forEach(m => {
-                    const monthlyData = report[lokasi][m] || { count: 0, bongkar: false };
-                    const count = monthlyData.count || 0;
+                    const monthlyData = report[lokasi][m];
+                    const hasData = monthlyData !== undefined;
+                    const count = monthlyData?.count || 0;
                     rowTotal += count;
                     const displayValue = count > 0
                         ? `${count} Kali`
-                        : monthlyData.bongkar ? '-' : '0 Kali';
+                        : !hasData || monthlyData.bongkar ? '-' : '0 Kali';
                     rowHTML += `<td style="text-align: center;">${displayValue}</td>`;
                 });
 
