@@ -377,11 +377,11 @@
         <nav class="nav-menu" style="margin-top: 20px;">
             <button class="nav-item active" onclick="switchTab('tab-dashboard', this)">
                 <i class="fa-solid fa-chart-line"></i>
-                <span>Dashboard Utama</span>
+                <span>Dashboard</span>
             </button>
             <button class="nav-item" onclick="switchTab('tab-rawdata', this)">
                 <i class="fa-solid fa-database"></i>
-                <span>Rincian Data</span>
+                <span>Data</span>
             </button>
             <button class="nav-item" onclick="switchTab('tab-summary', this)">
                 <i class="fa-solid fa-table-columns"></i>
@@ -396,9 +396,9 @@
             </div>
             
             <div class="filter-group">
-                <label for="selectPG">Pilih PG</label>
+                <label for="selectPG">Select PG</label>
                 <select id="selectPG" onchange="onPGChange()">
-                    <option value="">-- Pilih PG --</option>
+                    <option value="">-- Select PG --</option>
                     @if(isset($pgList))
                         @foreach($pgList as $item)
                             @php 
@@ -411,9 +411,9 @@
             </div>
 
             <div class="filter-group">
-                <label for="selectLokasi">Pilih Lokasi / Blok</label>
+                <label for="selectLokasi">Select Location / Block</label>
                 <select id="selectLokasi" onchange="onLokasiChange()" disabled>
-                    <option value="">-- Pilih PG Dulu --</option>
+                    <option value="">-- Select PG First --</option>
                 </select>
             </div>
         </div>
@@ -438,32 +438,32 @@
                     <i class="fa-solid fa-file-excel"></i>
                     Upload Excel
                 </button>
-                <div id="uploadStatusText" class="upload-status-text">Belum ada file dipilih</div>
+                <div id="uploadStatusText" class="upload-status-text">No file selected</div>
                 <div id="fileStatusBadge" class="badge-status-file">
                     <i class="fa-solid fa-database" style="color: #0284c7;"></i> Database Connected
                 </div>
             </div>
         </header>
 
-        <!-- TAB 1: DASHBOARD UTAMA -->
+        <!-- TAB 1: DASHBOARD -->
         <div id="tab-dashboard" class="tab-page active">
             <div class="card">
                 <div class="card-header">
                     <div style="display: flex; align-items: center; gap: 14px;">
                         <div class="icon-circle-blue"><i class="fa-solid fa-droplet"></i></div>
                         <div>
-                            <h2 style="font-size: 18px; font-weight: 800; color: #0f172a;">Tren & Distribusi Water Balance Harian</h2>
-                            <p style="font-size: 13px; color: var(--text-muted);">Visualisasi tren water balance dan proporsi fase air harian</p>
+                            <h2 style="font-size: 18px; font-weight: 800; color: #0f172a;">Daily Water Balance Trends & Distribution</h2>
+                            <p style="font-size: 13px; color: var(--text-muted);">Daily water balance trends and water status distribution</p>
                         </div>
                     </div>
-                    <span id="dataRowCountBadge" class="badge-status-file"><i class="fa-regular fa-calendar"></i> 0 Hari</span>
+                    <span id="dataRowCountBadge" class="badge-status-file"><i class="fa-regular fa-calendar"></i> 0 Days</span>
                 </div>
 
                 <div class="kpi-grid">
                     <div class="kpi-card kpi-blue">
                         <div class="kpi-icon-box"><i class="fa-solid fa-droplet"></i></div>
                         <div>
-                            <span class="kpi-title">Water Balance Terakhir</span>
+                            <span class="kpi-title">Latest Water Balance</span>
                             <div class="kpi-value" id="statCurrentWB">- <small>mm</small></div>
                         </div>
                     </div>
@@ -494,13 +494,13 @@
             <div class="dashboard-vertical-grid">
                 <section class="card full-width-card" style="margin-bottom: 0;">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-chart-area" style="color: #0284c7;"></i> Grafik Tren Water Balance</h3>
+                        <h3><i class="fa-solid fa-chart-area" style="color: #0284c7;"></i> Water Balance Trend</h3>
                         <span id="statLokasiBadge" style="font-weight: 700; color: #0284c7; font-size: 13px;">-</span>
                     </div>
                     <div style="height: 380px; position: relative;">
                         <div class="empty-state-box" id="emptyChartState">
                             <i class="fa-solid fa-chart-line"></i>
-                            <p>Silakan pilih PG dan Lokasi pada filter control di sebelah kiri.</p>
+                            <p>Select a PG and location using the filter on the left.</p>
                         </div>
                         <canvas id="waterBalanceChart" style="display: none;"></canvas>
                     </div>
@@ -508,37 +508,37 @@
 
                 <section class="card full-width-card" style="margin-bottom: 0;">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-chart-pie" style="color: #22c55e;"></i> Proporsi & Distribusi Kondisi Air Tanah</h3>
+                        <h3><i class="fa-solid fa-chart-pie" style="color: #22c55e;"></i> Water Status Distribution</h3>
                     </div>
                     <div class="pie-container-flex">
                         <div class="pie-chart-box">
                             <div class="empty-state-box" id="emptyPieState">
                                 <i class="fa-solid fa-chart-pie"></i>
-                                <p>Pilih lokasi terlebih dahulu.</p>
+                                <p>Select a location first.</p>
                             </div>
                             <canvas id="statusPieChart" style="display: none;"></canvas>
                         </div>
 
                         <div class="pie-details-legend">
                             <div class="legend-stat-item fc">
-                                <div class="title">🟢 Air Penuh (Field Capacity)</div>
-                                <div class="value" id="legFcVal">0 Hari</div>
-                                <div class="percentage" id="legFcPerc">0% dari total durasi</div>
+                                <div class="title">🟢 Full (Field Capacity)</div>
+                                <div class="value" id="legFcVal">0 Days</div>
+                                <div class="percentage" id="legFcPerc">0% of total</div>
                             </div>
                             <div class="legend-stat-item fc-mad">
-                                <div class="title">🔵 Kondisi Aman (Optimal)</div>
-                                <div class="value" id="legFcMadVal">0 Hari</div>
-                                <div class="percentage" id="legFcMadPerc">0% dari total durasi</div>
+                                <div class="title">🔵 Safe (Optimal)</div>
+                                <div class="value" id="legFcMadVal">0 Days</div>
+                                <div class="percentage" id="legFcMadPerc">0% of total</div>
                             </div>
                             <div class="legend-stat-item mad-wp">
-                                <div class="title">🟡 Mulai Kering (Waspada)</div>
-                                <div class="value" id="legMadWpVal">0 Hari</div>
-                                <div class="percentage" id="legMadWpPerc">0% dari total durasi</div>
+                                <div class="title">🟡 Drying (Warning)</div>
+                                <div class="value" id="legMadWpVal">0 Days</div>
+                                <div class="percentage" id="legMadWpPerc">0% of total</div>
                             </div>
                             <div class="legend-stat-item wp">
-                                <div class="title">🔴 Sangat Kritis (Titik Layu)</div>
-                                <div class="value" id="legWpVal">0 Hari</div>
-                                <div class="percentage" id="legWpPerc">0% dari total durasi</div>
+                                <div class="title">🔴 Critical (Wilting Point)</div>
+                                <div class="value" id="legWpVal">0 Days</div>
+                                <div class="percentage" id="legWpPerc">0% of total</div>
                             </div>
                         </div>
                     </div>
@@ -546,24 +546,24 @@
             </div>
         </div>
 
-        <!-- TAB 2: RINCIAN DATA -->
+        <!-- TAB 2: DATA -->
         <div id="tab-rawdata" class="tab-page">
             <section class="card">
                 <div class="card-header">
-                    <h3><i class="fa-solid fa-table-list" style="color: #0284c7;"></i> Rincian Data Water Balance Harian</h3>
+                    <h3><i class="fa-solid fa-table-list" style="color: #0284c7;"></i> Daily Water Balance Data</h3>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>Tanggal</th>
+                                <th>Date</th>
                                 <th>Rainfall (mm)</th>
-                                <th>Luas Siram / Total (Ha)</th>
-                                <th>Irigasi (mm)</th>
+                                <th>Irrigated Area / Total (Ha)</th>
+                                <th>Irrigation (mm)</th>
                                 <th>Evapotranspirasi (mm/day)</th>
                                 <th>Water Balance (mm)</th>
-                                <th>Status Zone</th>
-                                <th>Prioritas / Status</th>
+                                <th>Water Status</th>
+                                <th>Priority / Status</th>
                             </tr>
                         </thead>
                         <tbody id="excelTableBody">
@@ -571,7 +571,7 @@
                                 <td colspan="8">
                                     <div class="empty-state-box">
                                         <i class="fa-solid fa-folder-open"></i>
-                                        <p>Silakan pilih lokasi pada filter control.</p>
+                                        <p>Select a location using the filter.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -585,23 +585,23 @@
         <div id="tab-summary" class="tab-page">
             <section class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="color: #0f172a;"><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Rangking Kesehatan Air Seluruh Lokasi</h3>
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Location Water Health Ranking</h3>
                     <span id="summaryPgBadge" style="font-weight: 700; color: #0284c7; font-size: 13px;">-</span>
                 </div>
                 <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
-                    *Diurutkan berdasarkan lokasi dengan durasi <strong>Sangat Kritis (At WP)</strong> paling banyak untuk prioritas penanganan penyiraman.
+                    *Ranked by locations with the most <strong>Critical (At WP)</strong> days for irrigation prioritization.
                 </p>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th style="width: 60px; text-align: center;">Rank</th>
-                                <th>PG - Lokasi</th>
-                                <th style="text-align: center;">Air Penuh (Hari / %)</th>
-                                <th style="text-align: center;">Kondisi Aman (Hari / %)</th>
-                                <th style="text-align: center;">Mulai Kering (Hari / %)</th>
-                                <th style="text-align: center;">Sangat Kritis (Hari / %)</th>
-                                <th style="text-align: center;">Total Hari</th>
+                                <th>PG - Location</th>
+                                <th style="text-align: center;">Full (Days / %)</th>
+                                <th style="text-align: center;">Safe (Days / %)</th>
+                                <th style="text-align: center;">Drying (Days / %)</th>
+                                <th style="text-align: center;">Critical (Days / %)</th>
+                                <th style="text-align: center;">Total Days</th>
                             </tr>
                         </thead>
                         <tbody id="summaryTableBody">
@@ -609,7 +609,7 @@
                                 <td colspan="7">
                                     <div class="empty-state-box">
                                         <i class="fa-solid fa-chart-pie"></i>
-                                        <p>Pilih PG pada filter control untuk menampilkan perbandingan seluruh lokasi.</p>
+                                        <p>Select a PG to compare all locations.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -620,12 +620,12 @@
 
             <section class="card full-width-card">
                 <div class="card-header">
-                    <h3 style="color: #0f172a;"><i class="fa-solid fa-chart-bar" style="color: #0284c7;"></i> Perbandingan Visual Kondisi Air Antar Lokasi</h3>
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-chart-bar" style="color: #0284c7;"></i> Location Water Status Comparison</h3>
                 </div>
                 <div style="height: 350px; position: relative;">
                     <div class="empty-state-box" id="emptyCompareChartState">
                         <i class="fa-solid fa-chart-simple"></i>
-                        <p>Pilih PG pada filter control untuk menampilkan grafik perbandingan.</p>
+                        <p>Select a PG to view the comparison chart.</p>
                     </div>
                     <canvas id="compareBarChart" style="display: none;"></canvas>
                 </div>
@@ -633,14 +633,14 @@
 
             <section class="card">
                 <div class="card-header">
-                    <h3 style="color: #0f172a;"><i class="fa-solid fa-droplet" style="color: #0284c7;"></i> Rekapitulasi Frekuensi Siram Per Bulan</h3>
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-droplet" style="color: #0284c7;"></i> Monthly Irrigation Frequency</h3>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr id="irrigationMonthlyHeader">
-                                <th>PG - Lokasi</th>
-                                <th style="text-align: center; color: #0284c7;">Total Siram</th>
+                                <th>PG - Location</th>
+                                <th style="text-align: center; color: #0284c7;">Total Irrigation</th>
                             </tr>
                         </thead>
                         <tbody id="irrigationMonthlyBody">
@@ -648,7 +648,7 @@
                                 <td colspan="5" style="text-align:center;">
                                     <div class="empty-state-box">
                                         <i class="fa-solid fa-droplet-slash"></i>
-                                        <p>Pilih PG pada filter control untuk memuat rekapitulasi bulanan seluruh lokasi.</p>
+                                        <p>Select a PG to load the monthly summary for all locations.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -697,7 +697,7 @@
                 : '{{ url("/api/water-balance/export") }}';
 
             window.location.href = exportUrl;
-            showToast('success', 'Export data', 'File CSV sedang diunduh.');
+            showToast('success', 'Export Data', 'CSV file is downloading.');
         });
 
         excelFileInput.addEventListener('change', async () => {
@@ -707,7 +707,7 @@
                 return;
             }
 
-            uploadStatusText.textContent = 'Mengupload ' + file.name + '...';
+            uploadStatusText.textContent = 'Uploading ' + file.name + '...';
             uploadStatusText.style.color = '#0f172a';
             uploadStatusText.style.background = 'rgba(14, 165, 233, 0.10)';
 
@@ -727,15 +727,15 @@
                 const result = await response.json();
 
                 if (!response.ok || result.success === false) {
-                    throw new Error(result.message || 'Import gagal.');
+                    throw new Error(result.message || 'Import failed.');
                 }
 
                 const summary = result.summary || { created: 0, updated: 0, skipped: 0 };
                 const summaryText = 'Baru: ' + summary.created + ', Update: ' + summary.updated + ', Lewat: ' + summary.skipped;
-                uploadStatusText.textContent = 'Import berhasil | ' + summaryText;
+                uploadStatusText.textContent = 'Import complete | ' + summaryText;
                 uploadStatusText.style.color = '#166534';
                 uploadStatusText.style.background = 'rgba(34, 197, 94, 0.10)';
-                showToast('success', 'Import berhasil', result.message + ' (' + summaryText + ')');
+                showToast('success', 'Import Complete', result.message + ' (' + summaryText + ')');
 
                 setTimeout(() => {
                     if (typeof onPGChange === 'function') {
@@ -746,11 +746,11 @@
                     }
                 }, 500);
             } catch (error) {
-                const errMessage = error.message || 'Import gagal.';
+                const errMessage = error.message || 'Import failed.';
                 uploadStatusText.textContent = errMessage;
                 uploadStatusText.style.color = '#b91c1c';
                 uploadStatusText.style.background = 'rgba(239, 68, 68, 0.10)';
-                showToast('error', 'Import gagal', errMessage);
+                showToast('error', 'Import Failed', errMessage);
             } finally {
                 excelFileInput.value = '';
             }

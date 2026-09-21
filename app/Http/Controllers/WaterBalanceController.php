@@ -129,13 +129,13 @@ class WaterBalanceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data Excel berhasil diproses. '.$summary['created'].' data baru, '.$summary['updated'].' data diperbarui, '.$summary['skipped'].' data dilewati.',
+                'message' => 'Excel data processed. '.$summary['created'].' new, '.$summary['updated'].' updated, '.$summary['skipped'].' skipped.',
                 'summary' => $summary,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Import data gagal: '.$e->getMessage(),
+                'message' => 'Import failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -145,7 +145,7 @@ class WaterBalanceController extends Controller
         $path = storage_path('app/templates/water-balance-template.csv');
 
         if (! file_exists($path)) {
-            abort(404, 'Template import tidak ditemukan.');
+            abort(404, 'Import template not found.');
         }
 
         return response()->download($path, 'water-balance-template.csv');

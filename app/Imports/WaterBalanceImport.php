@@ -51,7 +51,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
         }
 
         if ($missing !== []) {
-            throw new \InvalidArgumentException('Kolom Excel yang dibutuhkan tidak ditemukan: '.implode(', ', $missing));
+            throw new \InvalidArgumentException('Required Excel columns not found: '.implode(', ', $missing));
         }
 
         $grouped = $rows->groupBy(function ($item) {

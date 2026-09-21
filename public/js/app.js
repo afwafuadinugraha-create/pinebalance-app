@@ -43,23 +43,23 @@ function onPGChange() {
 
     if (!selectedPG) {
         lokasiSelect.disabled = true;
-        lokasiSelect.innerHTML = '<option value="">-- Pilih PG Dulu --</option>';
+        lokasiSelect.innerHTML = '<option value="">-- Select PG First --</option>';
         return;
     }
 
     lokasiSelect.disabled = true;
-    lokasiSelect.innerHTML = '<option value="">-- Memuat Lokasi... --</option>';
+    lokasiSelect.innerHTML = '<option value="">-- Loading Locations... --</option>';
 
     fetch(`/api/lokasi?pg=${encodeURIComponent(selectedPG)}`)
         .then(response => response.json())
         .then(data => {
-            lokasiSelect.innerHTML = '<option value="">-- Pilih Lokasi --</option>';
+            lokasiSelect.innerHTML = '<option value="">-- Select Location --</option>';
             if (Array.isArray(data)) {
                 data.forEach(lokasi => {
                     const opt = document.createElement('option');
                     opt.value = lokasi;
                     const cleanLokasi = lokasi.toString().replace(/^lokasi\s*/gi, '').trim();
-                    opt.innerText = `Lokasi ${cleanLokasi}`;
+                    opt.innerText = `Location ${cleanLokasi}`;
                     lokasiSelect.appendChild(opt);
                 });
             }
@@ -95,17 +95,17 @@ function renderDashboardForLocation(rows, pg, lokasi) {
 
     const statusBadge = document.getElementById('fileStatusBadge');
     if (statusBadge) {
-        statusBadge.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Data Aktif: PG ${cleanPG} - Lokasi ${cleanLokasi}`;
+        statusBadge.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #22c55e;"></i> Active Data: PG ${cleanPG} - Location ${cleanLokasi}`;
     }
 
     const rowBadge = document.getElementById('dataRowCountBadge');
     if (rowBadge) {
-        rowBadge.innerHTML = `<i class="fa-regular fa-calendar"></i> ${rows.length} Hari Monitor`;
+        rowBadge.innerHTML = `<i class="fa-regular fa-calendar"></i> ${rows.length} Monitoring Days`;
     }
 
     const lokBadge = document.getElementById('statLokasiBadge');
     if (lokBadge) {
-        lokBadge.innerText = `PG ${cleanPG} - Lokasi ${cleanLokasi}`;
+        lokBadge.innerText = `PG ${cleanPG} - Location ${cleanLokasi}`;
     }
 
     const lastRow = rows[rows.length - 1];
@@ -172,7 +172,8 @@ function renderLineChart(rows) {
                 if (!status) return;
 
                 context.fillStyle = status.toLowerCase() === 'bongkar' ? '#b45309' : '#be123c';
-                context.fillText(status, point.x, point.y - 10);
+                const displayStatus = status.toLowerCase() === 'bongkar' ? 'Dismantled' : status;
+                context.fillText(displayStatus, point.x, point.y - 10);
             });
 
             context.restore();
@@ -186,7 +187,7 @@ function renderLineChart(rows) {
             datasets: [
                 {
                     type: 'bar',
-                    label: 'Curah Hujan (mm)',
+                    label: 'Rainfall (mm)',
                     data: dataRainfall,
                     backgroundColor: '#38bdf8',
                     borderColor: '#0369a1',
@@ -196,7 +197,7 @@ function renderLineChart(rows) {
                 },
                 {
                     type: 'bar',
-                    label: 'Irigasi (mm)',
+                    label: 'Irrigation (mm)',
                     data: dataIrrigation,
                     backgroundColor: '#facc15',
                     borderColor: '#a16207',
@@ -238,8 +239,8 @@ function renderLineChart(rows) {
                             if (!row?.status_harian) return [];
 
                             return [
-                                `Status: ${row.status_harian}`,
-                                row.status_keterangan ? `Catatan: ${row.status_keterangan}` : ''
+                                `Status: ${row.status_harian.toLowerCase() === 'bongkar' ? 'Dismantled' : row.status_harian}`,
+                                row.status_keterangan ? `Note: ${row.status_keterangan}` : ''
                             ].filter(Boolean);
                         }
                     }
@@ -275,14 +276,14 @@ function renderPieChart(rows) {
         if (el) el.innerText = txt;
     };
 
-    setElemText('legFcVal', `${counts['At FC']} Hari`);
-    setElemText('legFcPerc', `${getPerc(counts['At FC'])}% dari total durasi`);
-    setElemText('legFcMadVal', `${counts['FC - MAD 50%']} Hari`);
-    setElemText('legFcMadPerc', `${getPerc(counts['FC - MAD 50%'])}% dari total durasi`);
-    setElemText('legMadWpVal', `${counts['MAD 50% - WP']} Hari`);
-    setElemText('legMadWpPerc', `${getPerc(counts['MAD 50% - WP'])}% dari total durasi`);
-    setElemText('legWpVal', `${counts['At WP']} Hari`);
-    setElemText('legWpPerc', `${getPerc(counts['At WP'])}% dari total durasi`);
+    setElemText('legFcVal', `${counts['At FC']} Days`);
+    setElemText('legFcPerc', `${getPerc(counts['At FC'])}% of total`);
+    setElemText('legFcMadVal', `${counts['FC - MAD 50%']} Days`);
+    setElemText('legFcMadPerc', `${getPerc(counts['FC - MAD 50%'])}% of total`);
+    setElemText('legMadWpVal', `${counts['MAD 50% - WP']} Days`);
+    setElemText('legMadWpPerc', `${getPerc(counts['MAD 50% - WP'])}% of total`);
+    setElemText('legWpVal', `${counts['At WP']} Days`);
+    setElemText('legWpPerc', `${getPerc(counts['At WP'])}% of total`);
 
     if (statusPieChartInstance) {
         statusPieChartInstance.destroy();
@@ -292,7 +293,7 @@ function renderPieChart(rows) {
     statusPieChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Air Penuh (FC)', 'Kondisi Aman (Optimal)', 'Mulai Kering (Waspada)', 'Sangat Kritis (Titik Layu)'],
+            labels: ['Full (FC)', 'Safe (Optimal)', 'Drying (Warning)', 'Critical (Wilting Point)'],
             datasets: [{
                 data: [counts['At FC'], counts['FC - MAD 50%'], counts['MAD 50% - WP'], counts['At WP']],
                 backgroundColor: ['#22c55e', '#3b82f6', '#eab308', '#ef4444']
@@ -315,6 +316,7 @@ function renderRawDataTable(rows) {
 
         const tr = document.createElement('tr');
         const dailyStatus = r.status_harian || '-';
+        const displayDailyStatus = dailyStatus.toLowerCase() === 'bongkar' ? 'Dismantled' : dailyStatus;
         const dailyStatusColor = dailyStatus.toLowerCase() === 'bongkar' ? '#b45309' : '#be123c';
         tr.innerHTML = `
             <td>${formatDateCustom(r.tanggal)}</td>
@@ -324,7 +326,7 @@ function renderRawDataTable(rows) {
             <td>${parseFloat(r.evapotranspirasi_mm).toFixed(2)}</td>
             <td style="font-weight:700; color: #0f172a;">${parseFloat(r.water_balance_mm).toFixed(2)}</td>
             <td><span style="background:${badgeColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${r.status_zone}</span></td>
-            <td><span style="background:${dailyStatus === '-' ? '#cbd5e1' : dailyStatusColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${dailyStatus}</span>${r.status_keterangan ? `<br><small style="color:#64748b;">${r.status_keterangan}</small>` : ''}</td>
+            <td><span style="background:${dailyStatus === '-' ? '#cbd5e1' : dailyStatusColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${displayDailyStatus}</span>${r.status_keterangan ? `<br><small style="color:#64748b;">${r.status_keterangan}</small>` : ''}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -343,7 +345,7 @@ function renderPGSummaryTable(pg) {
             summaryTbody.innerHTML = '';
 
             if (!Array.isArray(summaryList) || summaryList.length === 0) {
-                summaryTbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Tidak ada data lokasi untuk PG ini.</td></tr>`;
+                summaryTbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No location data for this PG.</td></tr>`;
                 return;
             }
 
@@ -359,12 +361,12 @@ function renderPGSummaryTable(pg) {
                 tr.style = rowStyle;
                 tr.innerHTML = `
                     <td style="text-align: center; font-weight: 800;">${index + 1}</td>
-                    <td style="font-weight: 700;">PG ${cleanPG} - Lokasi ${cleanLokasi}</td>
-                    <td style="text-align: center;">${item.count_fc} Hari (${getPerc(item.count_fc)}%)</td>
-                    <td style="text-align: center;">${item.count_fc_mad} Hari (${getPerc(item.count_fc_mad)}%)</td>
-                    <td style="text-align: center;">${item.count_mad_wp} Hari (${getPerc(item.count_mad_wp)}%)</td>
-                    <td style="text-align: center; color: #ef4444; font-weight: 700;">${item.count_wp} Hari (${getPerc(item.count_wp)}%)</td>
-                    <td style="text-align: center; font-weight: 800;">${total} Hari</td>
+                    <td style="font-weight: 700;">PG ${cleanPG} - Location ${cleanLokasi}</td>
+                    <td style="text-align: center;">${item.count_fc} Days (${getPerc(item.count_fc)}%)</td>
+                    <td style="text-align: center;">${item.count_fc_mad} Days (${getPerc(item.count_fc_mad)}%)</td>
+                    <td style="text-align: center;">${item.count_mad_wp} Days (${getPerc(item.count_mad_wp)}%)</td>
+                    <td style="text-align: center; color: #ef4444; font-weight: 700;">${item.count_wp} Days (${getPerc(item.count_wp)}%)</td>
+                    <td style="text-align: center; font-weight: 800;">${total} Days</td>
                 `;
                 summaryTbody.appendChild(tr);
             });
@@ -382,7 +384,7 @@ function renderCompareBarChart(summaryList, cleanPG) {
     if (!canvas) return;
     canvas.style.display = 'block';
 
-    const labels = summaryList.map(item => `Lokasi ${item.lokasi.replace(/^lokasi\s*/gi, '').trim()}`);
+    const labels = summaryList.map(item => `Location ${item.lokasi.replace(/^lokasi\s*/gi, '').trim()}`);
     const dataFC = summaryList.map(item => parseInt(item.count_fc));
     const dataFCMAD = summaryList.map(item => parseInt(item.count_fc_mad));
     const dataMADWP = summaryList.map(item => parseInt(item.count_mad_wp));
@@ -398,10 +400,10 @@ function renderCompareBarChart(summaryList, cleanPG) {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Air Penuh (FC)', data: dataFC, backgroundColor: '#22c55e' },
-                { label: 'Kondisi Aman (Optimal)', data: dataFCMAD, backgroundColor: '#3b82f6' },
-                { label: 'Mulai Kering (Waspada)', data: dataMADWP, backgroundColor: '#eab308' },
-                { label: 'Sangat Kritis (Titik Layu)', data: dataWP, backgroundColor: '#ef4444' }
+                { label: 'Full (FC)', data: dataFC, backgroundColor: '#22c55e' },
+                { label: 'Safe (Optimal)', data: dataFCMAD, backgroundColor: '#3b82f6' },
+                { label: 'Drying (Warning)', data: dataMADWP, backgroundColor: '#eab308' },
+                { label: 'Critical (Wilting Point)', data: dataWP, backgroundColor: '#ef4444' }
             ]
         },
         options: {
@@ -409,7 +411,7 @@ function renderCompareBarChart(summaryList, cleanPG) {
             maintainAspectRatio: false,
             scales: {
                 x: { stacked: true },
-                y: { stacked: true, title: { display: true, text: 'Jumlah Hari' } }
+                y: { stacked: true, title: { display: true, text: 'Days' } }
             },
             plugins: { legend: { display: true, position: 'top' } }
         }
@@ -429,18 +431,18 @@ function renderPGMonthlyIrrigationTable(pg) {
             const tbody = document.getElementById('irrigationMonthlyBody');
             if (!headerTr || !tbody) return;
 
-            let headerHTML = `<th>PG - Lokasi</th>`;
+            let headerHTML = `<th>PG - Location</th>`;
             months.forEach(m => {
                 headerHTML += `<th style="text-align: center;">${formatMonthName(m)}</th>`;
             });
-            headerHTML += `<th style="text-align: center; color: #0284c7;">Total Siram</th>`;
+            headerHTML += `<th style="text-align: center; color: #0284c7;">Total Irrigation</th>`;
             headerTr.innerHTML = headerHTML;
 
             tbody.innerHTML = '';
             const lokasiKeys = Object.keys(report);
 
             if (lokasiKeys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${months.length + 2}" style="text-align:center;">Tidak ada riwayat penyiraman di PG ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${months.length + 2}" style="text-align:center;">No irrigation history for this PG.</td></tr>`;
                 return;
             }
 
@@ -448,7 +450,7 @@ function renderPGMonthlyIrrigationTable(pg) {
                 const cleanLokasi = lokasi.toString().replace(/^lokasi\s*/gi, '').trim();
                 let rowTotal = 0;
 
-                let rowHTML = `<td style="font-weight: 700;">PG ${cleanPG} - Lokasi ${cleanLokasi}</td>`;
+                let rowHTML = `<td style="font-weight: 700;">PG ${cleanPG} - Location ${cleanLokasi}</td>`;
 
                 months.forEach(m => {
                     const monthlyData = report[lokasi][m];
@@ -456,12 +458,12 @@ function renderPGMonthlyIrrigationTable(pg) {
                     const count = monthlyData?.count || 0;
                     rowTotal += count;
                     const displayValue = count > 0
-                        ? `${count} Kali`
-                        : !hasData || monthlyData.bongkar ? '-' : '0 Kali';
+                        ? `${count} Times`
+                        : !hasData || monthlyData.bongkar ? '-' : '0 Times';
                     rowHTML += `<td style="text-align: center;">${displayValue}</td>`;
                 });
 
-                rowHTML += `<td style="text-align: center; font-weight: 800; color: #0284c7;">${rowTotal} Kali</td>`;
+                rowHTML += `<td style="text-align: center; font-weight: 800; color: #0284c7;">${rowTotal} Times</td>`;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = rowHTML;
