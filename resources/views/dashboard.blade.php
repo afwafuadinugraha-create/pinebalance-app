@@ -305,7 +305,19 @@
             }
 
             .sidebar-toggle {
-                display: none;
+                display: block;
+                top: 12px;
+                left: auto;
+                right: 16px;
+            }
+
+            body.sidebar-collapsed .sidebar {
+                display: none !important;
+            }
+
+            body.sidebar-collapsed .main-wrapper {
+                margin-left: 0 !important;
+                width: 100% !important;
             }
 
             .main-wrapper {
