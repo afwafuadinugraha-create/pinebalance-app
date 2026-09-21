@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Imports\WaterBalanceImport;
 use App\Models\DailyWaterBalance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Tests\TestCase;
 
 class DailyWaterBalanceImportSafetyTest extends TestCase
@@ -54,6 +56,44 @@ class DailyWaterBalanceImportSafetyTest extends TestCase
             'lokasi' => 'Lokasi A',
             'tanggal' => '2026-09-01',
             'water_balance_mm' => '90.00',
+        ]);
+    }
+
+    public function test_import_removes_dates_missing_from_the_uploaded_location_data(): void
+    {
+        DailyWaterBalance::create([
+            'pg' => '01',
+            'lokasi' => 'A',
+            'tanggal' => '2026-08-01',
+            'rainfall_mm' => 0,
+            'irigasi_mm' => 0,
+            'evapotranspirasi_mm' => 5,
+            'water_balance_mm' => 100,
+            'status_zone' => 'FC - MAD 50%',
+        ]);
+
+        $importer = new WaterBalanceImport;
+        $importer->collection(new Collection([
+            new Collection([
+                'pg' => 'PG 01',
+                'lokasi' => 'Lokasi A',
+                'tanggal' => '2026-09-01',
+                'rainfall_mm' => 0,
+                'irigasi_mm' => 0,
+                'evapotranspirasi_mm' => 5,
+            ]),
+        ]));
+
+        $this->assertSame(1, $importer->getSummary()['created']);
+        $this->assertDatabaseHas('daily_water_balances', [
+            'pg' => '01',
+            'lokasi' => 'A',
+            'tanggal' => '2026-09-01',
+        ]);
+        $this->assertDatabaseMissing('daily_water_balances', [
+            'pg' => '01',
+            'lokasi' => 'A',
+            'tanggal' => '2026-08-01',
         ]);
     }
 }

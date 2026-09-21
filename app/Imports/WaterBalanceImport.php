@@ -3,10 +3,11 @@
 namespace App\Imports;
 
 use App\Models\DailyWaterBalance;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class WaterBalanceImport implements ToCollection, WithHeadingRow
 {
@@ -27,9 +28,10 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
 
     public function collection(Collection $rows): void
     {
+        $importedDatesByLocation = [];
         $headers = [];
         foreach ($rows as $row) {
-            if ($row === null || !is_array($row) && !($row instanceof \ArrayAccess)) {
+            if ($row === null || ! is_array($row) && ! ($row instanceof \ArrayAccess)) {
                 continue;
             }
 
@@ -43,13 +45,13 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
         $headerSet = array_map(fn ($header) => $this->normalizeKey($header), $headers);
         $missing = [];
         foreach ($this->requiredColumns as $column) {
-            if (!in_array($this->normalizeKey($column), $headerSet, true) && !in_array($this->normalizeKey(str_replace('_mm', '', $column)), $headerSet, true)) {
+            if (! in_array($this->normalizeKey($column), $headerSet, true) && ! in_array($this->normalizeKey(str_replace('_mm', '', $column)), $headerSet, true)) {
                 $missing[] = $column;
             }
         }
 
         if ($missing !== []) {
-            throw new \InvalidArgumentException('Kolom Excel yang dibutuhkan tidak ditemukan: ' . implode(', ', $missing));
+            throw new \InvalidArgumentException('Kolom Excel yang dibutuhkan tidak ditemukan: '.implode(', ', $missing));
         }
 
         $grouped = $rows->groupBy(function ($item) {
@@ -59,7 +61,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
             $cleanPg = trim(preg_replace('/^pg\s*/i', '', $rawPg));
             $cleanLokasi = trim(preg_replace('/^lokasi\s*/i', '', $rawLokasi));
 
-            return $cleanPg . '_' . $cleanLokasi;
+            return $cleanPg.'_'.$cleanLokasi;
         });
 
         foreach ($grouped as $key => $groupRows) {
@@ -74,8 +76,9 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                 $rawPg = $this->getValue($row, ['pg', 'PG', 'pabrik_gula']);
                 $rawLokasi = $this->getValue($row, ['lokasi', 'Lokasi', 'lokasi_blok', 'blok']);
 
-                if (!$tanggal || !$rawPg || !$rawLokasi) {
+                if (! $tanggal || ! $rawPg || ! $rawLokasi) {
                     $this->skipped++;
+
                     continue;
                 }
 
@@ -84,8 +87,11 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
 
                 if ($pg === '' || $lokasi === '') {
                     $this->skipped++;
+
                     continue;
                 }
+
+                $importedDatesByLocation[$pg][$lokasi][] = $tanggal;
 
                 $rainfall = floatval($this->getValue($row, ['rainfall_mm', 'rainfall', 'curah_hujan', 'hujan_mm', 'hujan', 'rf_mm', 'rf']));
                 $irigasi = floatval($this->getValue($row, ['irigasi_mm', 'irigasi', 'siram_mm', 'siram', 'irrigation_mm', 'irrigation']));
@@ -129,6 +135,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
 
                 if ($tanggal === null || $this->getValue($row, ['tanggal', 'Tanggal', 'date', 'tgl']) === null) {
                     $this->skipped++;
+
                     continue;
                 }
 
@@ -193,6 +200,15 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                 $previousWB = $currentWB;
             }
         }
+
+        foreach ($importedDatesByLocation as $pg => $locations) {
+            foreach ($locations as $lokasi => $importedDates) {
+                DailyWaterBalance::where('pg', $pg)
+                    ->where('lokasi', $lokasi)
+                    ->whereNotIn('tanggal', array_unique($importedDates))
+                    ->delete();
+            }
+        }
     }
 
     public function getSummary(): array
@@ -220,6 +236,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                 }
             }
         }
+
         return null;
     }
 
@@ -270,7 +287,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
         }
 
         if (preg_match('/^p\s*(\d+)$/i', $status, $matches)) {
-            return 'P' . $matches[1];
+            return 'P'.$matches[1];
         }
 
         if (preg_match('/^b(ongkar)?$/i', $status)) {
@@ -289,12 +306,15 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
 
     private function transformDate($value)
     {
-        if (empty($value)) return null;
+        if (empty($value)) {
+            return null;
+        }
 
         try {
             if (is_numeric($value)) {
-                return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value))->format('Y-m-d');
+                return Carbon::instance(Date::excelToDateTimeObject($value))->format('Y-m-d');
             }
+
             return Carbon::parse($value)->format('Y-m-d');
         } catch (\Exception $e) {
             return null;
