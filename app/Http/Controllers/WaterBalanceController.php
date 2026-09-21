@@ -73,7 +73,7 @@ class WaterBalanceController extends Controller
 
         // Ambil seluruh data tanggal untuk mendeteksi rentang bulan secara menyeluruh (termasuk Mei)
         $allData = DailyWaterBalance::where('pg', $pg)
-            ->select('lokasi', 'tanggal', 'irigasi_mm')
+            ->select('lokasi', 'tanggal', 'irigasi_mm', 'status_harian')
             ->get();
 
         $grouped = [];
@@ -90,11 +90,18 @@ class WaterBalanceController extends Controller
             }
 
             if (! isset($grouped[$lokasi][$monthKey])) {
-                $grouped[$lokasi][$monthKey] = 0;
+                $grouped[$lokasi][$monthKey] = [
+                    'count' => 0,
+                    'bongkar' => false,
+                ];
             }
 
             if (floatval($row->irigasi_mm) > 0) {
-                $grouped[$lokasi][$monthKey]++;
+                $grouped[$lokasi][$monthKey]['count']++;
+            }
+
+            if (strtolower((string) $row->status_harian) === 'bongkar') {
+                $grouped[$lokasi][$monthKey]['bongkar'] = true;
             }
         }
 

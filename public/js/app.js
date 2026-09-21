@@ -316,14 +316,11 @@ function renderRawDataTable(rows) {
         const tr = document.createElement('tr');
         const dailyStatus = r.status_harian || '-';
         const dailyStatusColor = dailyStatus.toLowerCase() === 'bongkar' ? '#b45309' : '#be123c';
-        const irrigationDisplay = dailyStatus.toLowerCase() === 'bongkar'
-            ? '-'
-            : parseFloat(r.irigasi_mm).toFixed(2);
         tr.innerHTML = `
             <td>${formatDateCustom(r.tanggal)}</td>
             <td>${parseFloat(r.rainfall_mm).toFixed(2)}</td>
             <td>${parseFloat(r.luas_siram_real_ha).toFixed(2)} / ${parseFloat(r.luas_siram_rencana_ha).toFixed(2)}</td>
-            <td>${irrigationDisplay}</td>
+            <td>${parseFloat(r.irigasi_mm).toFixed(2)}</td>
             <td>${parseFloat(r.evapotranspirasi_mm).toFixed(2)}</td>
             <td style="font-weight:700; color: #0f172a;">${parseFloat(r.water_balance_mm).toFixed(2)}</td>
             <td><span style="background:${badgeColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${r.status_zone}</span></td>
@@ -454,9 +451,13 @@ function renderPGMonthlyIrrigationTable(pg) {
                 let rowHTML = `<td style="font-weight: 700;">PG ${cleanPG} - Lokasi ${cleanLokasi}</td>`;
 
                 months.forEach(m => {
-                    const count = report[lokasi][m] || 0;
+                    const monthlyData = report[lokasi][m] || { count: 0, bongkar: false };
+                    const count = monthlyData.count || 0;
                     rowTotal += count;
-                    rowHTML += `<td style="text-align: center;">${count > 0 ? count + ' Kali' : '-'}</td>`;
+                    const displayValue = count > 0
+                        ? `${count} Kali`
+                        : monthlyData.bongkar ? '-' : '0 Kali';
+                    rowHTML += `<td style="text-align: center;">${displayValue}</td>`;
                 });
 
                 rowHTML += `<td style="text-align: center; font-weight: 800; color: #0284c7;">${rowTotal} Kali</td>`;
