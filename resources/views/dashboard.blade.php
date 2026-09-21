@@ -39,6 +39,41 @@
             background-position: center !important;
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 22px;
+            left: 264px;
+            z-index: 110;
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            background: #0284c7;
+            color: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+            transition: left 0.3s ease, transform 0.2s ease, background 0.2s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: #0369a1;
+            transform: scale(1.06);
+        }
+
+        body.sidebar-collapsed .sidebar {
+            transform: translateX(-100%);
+        }
+
+        body.sidebar-collapsed .sidebar-toggle {
+            left: 16px;
+        }
+
+        body.sidebar-collapsed .main-wrapper {
+            margin-left: 16px !important;
+            width: calc(100% - 32px) !important;
         }
 
         .sidebar .brand-text h2 { color: #ffffff !important; }
@@ -66,17 +101,17 @@
         }
 
         .sidebar .filter-card {
-            background: rgba(255, 255, 255, 0.94) !important;
+            background: rgba(15, 23, 42, 0.72) !important;
             backdrop-filter: blur(8px);
             border-radius: 16px;
             padding: 16px;
             margin-top: auto !important;
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.16);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
 
-        .sidebar .filter-header { color: #0f172a !important; font-weight: 800; }
-        .sidebar .filter-group label { color: #334155 !important; font-weight: 700; }
+        .sidebar .filter-header { color: #ffffff !important; font-weight: 800; }
+        .sidebar .filter-group label { color: #cbd5e1 !important; font-weight: 700; }
 
         .main-wrapper {
             margin-left: 280px !important;
@@ -266,6 +301,11 @@
                 border-right: none !important;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
                 padding: 18px 16px !important;
+                transform: none !important;
+            }
+
+            .sidebar-toggle {
+                display: none;
             }
 
             .main-wrapper {
@@ -418,6 +458,10 @@
             </div>
         </div>
     </aside>
+
+    <button type="button" class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
 
     <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 

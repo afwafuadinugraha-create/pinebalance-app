@@ -2,6 +2,16 @@ let waterBalanceChartInstance = null;
 let statusPieChartInstance = null;
 let compareBarChartInstance = null;
 
+function toggleSidebar() {
+    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+    const toggle = document.getElementById('sidebarToggle');
+    if (!toggle) return;
+
+    toggle.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    toggle.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    toggle.innerHTML = `<i class="fa-solid fa-chevron-${isCollapsed ? 'right' : 'left'}"></i>`;
+}
+
 function formatDateCustom(dateString) {
     if (!dateString) return '';
     const dateObj = new Date(dateString);
