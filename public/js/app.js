@@ -316,11 +316,14 @@ function renderRawDataTable(rows) {
         const tr = document.createElement('tr');
         const dailyStatus = r.status_harian || '-';
         const dailyStatusColor = dailyStatus.toLowerCase() === 'bongkar' ? '#b45309' : '#be123c';
+        const irrigationDisplay = dailyStatus.toLowerCase() === 'bongkar'
+            ? '-'
+            : parseFloat(r.irigasi_mm).toFixed(2);
         tr.innerHTML = `
             <td>${formatDateCustom(r.tanggal)}</td>
             <td>${parseFloat(r.rainfall_mm).toFixed(2)}</td>
             <td>${parseFloat(r.luas_siram_real_ha).toFixed(2)} / ${parseFloat(r.luas_siram_rencana_ha).toFixed(2)}</td>
-            <td>${parseFloat(r.irigasi_mm).toFixed(2)}</td>
+            <td>${irrigationDisplay}</td>
             <td>${parseFloat(r.evapotranspirasi_mm).toFixed(2)}</td>
             <td style="font-weight:700; color: #0f172a;">${parseFloat(r.water_balance_mm).toFixed(2)}</td>
             <td><span style="background:${badgeColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${r.status_zone}</span></td>
