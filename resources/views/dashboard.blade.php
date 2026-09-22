@@ -697,6 +697,7 @@
                             <tr id="irrigationMonthlyHeader">
                                 <th>PG - Location</th>
                                 <th style="text-align: center; color: #0284c7;">Total Irrigation</th>
+                                <th style="text-align: center; color: #16a34a;">Average / Month</th>
                             </tr>
                         </thead>
                         <tbody id="irrigationMonthlyBody">

@@ -446,13 +446,14 @@ function renderPGMonthlyIrrigationTable(pg) {
                 headerHTML += `<th style="text-align: center;">${formatMonthName(m)}</th>`;
             });
             headerHTML += `<th style="text-align: center; color: #0284c7;">Total Irrigation</th>`;
+            headerHTML += `<th style="text-align: center; color: #16a34a;">Average / Month</th>`;
             headerTr.innerHTML = headerHTML;
 
             tbody.innerHTML = '';
             const lokasiKeys = Object.keys(report);
 
             if (lokasiKeys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${months.length + 2}" style="text-align:center;">No irrigation history for this PG.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${months.length + 3}" style="text-align:center;">No irrigation history for this PG.</td></tr>`;
                 return;
             }
 
@@ -474,6 +475,8 @@ function renderPGMonthlyIrrigationTable(pg) {
                 });
 
                 rowHTML += `<td style="text-align: center; font-weight: 800; color: #0284c7;">${rowTotal} Times</td>`;
+                const averagePerMonth = months.length > 0 ? (rowTotal / months.length).toFixed(2) : '0.00';
+                rowHTML += `<td style="text-align: center; font-weight: 800; color: #16a34a;">${averagePerMonth} Times</td>`;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = rowHTML;
