@@ -14,20 +14,20 @@ function renderWilayahAlerts(pg = '') {
             if (!Array.isArray(alerts) || alerts.length === 0) {
                 countBadge.innerText = 'Aman';
                 countBadge.className = 'alert-count-badge alert-count-safe';
-                list.innerHTML = '<div class="alert-empty"><i class="fa-solid fa-circle-check"></i><span>Belum ada wilayah dengan status At WP.</span></div>';
+                list.innerHTML = '<div class="alert-empty"><i class="fa-solid fa-circle-check"></i><span>Belum ada lokasi dengan persentase At WP lebih dari 20%.</span></div>';
                 return;
             }
 
-            countBadge.innerText = `${alerts.length} Wilayah`;
+            countBadge.innerText = `${alerts.length} Lokasi`;
             list.innerHTML = alerts.map(alert => {
                 const wilayah = alert.wilayah || 'Wilayah belum diisi';
-                const severity = Number(alert.total_hari_wp) >= 10 ? 'critical' : 'warning';
+                const severity = Number(alert.persentase_wp) >= 50 ? 'critical' : 'warning';
                 return `
                     <div class="wilayah-alert-item ${severity}">
                         <div class="wilayah-alert-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
                         <div class="wilayah-alert-content">
-                            <strong>${wilayah}</strong>
-                            <span>PG ${alert.pg} · ${alert.lokasi_wp} lokasi terdampak · ${alert.total_hari_wp} hari At WP</span>
+                            <strong>PG ${alert.pg} · ${alert.lokasi} · ${wilayah}</strong>
+                            <span>${alert.total_hari_wp} dari ${alert.total_hari} hari At WP (${alert.persentase_wp}%)</span>
                         </div>
                         <div class="wilayah-alert-action">Perlu tindakan</div>
                     </div>

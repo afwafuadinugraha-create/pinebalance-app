@@ -80,17 +80,21 @@ class WaterBalanceController extends Controller
             ->select(
                 'pg',
                 'wilayah',
-                DB::raw('COUNT(DISTINCT lokasi) as total_lokasi'),
-                DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as total_hari_wp"),
-                DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as total_hari_mad_wp"),
-                DB::raw("COUNT(DISTINCT CASE WHEN status_zone = 'At WP' THEN lokasi END) as lokasi_wp")
+                'lokasi',
+                DB::raw('COUNT(*) as total_hari'),
+                DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as total_hari_wp")
             )
-            ->groupBy('pg', 'wilayah')
-            ->having('total_hari_wp', '>', 0)
-            ->orderByDesc('total_hari_wp')
-            ->orderByDesc('lokasi_wp')
-            ->limit(8)
-            ->get();
+            ->groupBy('pg', 'wilayah', 'lokasi')
+            ->get()
+            ->map(function ($alert) {
+                $alert->persentase_wp = round(($alert->total_hari > 0 ? $alert->total_hari_wp / $alert->total_hari : 0) * 100, 1);
+
+                return $alert;
+            })
+            ->filter(fn ($alert) => $alert->persentase_wp > 20)
+            ->sortByDesc('persentase_wp')
+            ->take(8)
+            ->values();
 
         return response()->json($alerts);
     }

@@ -550,8 +550,8 @@
             <section class="card alert-card full-width-card">
                 <div class="card-header">
                     <div>
-                        <h3><i class="fa-solid fa-bell" style="color: #dc2626;"></i> Wilayah Perlu Tindakan</h3>
-                        <p class="alert-card-subtitle">Wilayah dengan hari terbanyak berada di bawah Wilting Point (WP)</p>
+                        <h3><i class="fa-solid fa-bell" style="color: #dc2626;"></i> Lokasi Perlu Tindakan</h3>
+                        <p class="alert-card-subtitle">Lokasi dengan persentase hari At WP lebih dari 20%</p>
                     </div>
                     <span id="wilayahAlertCount" class="alert-count-badge">Memuat...</span>
                 </div>
