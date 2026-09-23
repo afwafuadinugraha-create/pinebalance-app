@@ -613,6 +613,7 @@
                         <thead>
                             <tr>
                                 <th>Date</th>
+                                <th>Wilayah</th>
                                 <th>Rainfall (mm)</th>
                                 <th>Irrigated Area / Total (Ha)</th>
                                 <th>Irrigation (mm)</th>
@@ -624,7 +625,7 @@
                         </thead>
                         <tbody id="excelTableBody">
                             <tr>
-                                <td colspan="8">
+                                        <td colspan="9">
                                     <div class="empty-state-box">
                                         <i class="fa-solid fa-folder-open"></i>
                                         <p>Select a location using the filter.</p>

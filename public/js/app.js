@@ -330,6 +330,7 @@ function renderRawDataTable(rows) {
         const dailyStatusColor = dailyStatus.toLowerCase() === 'bongkar' ? '#b45309' : '#be123c';
         tr.innerHTML = `
             <td>${formatDateCustom(r.tanggal)}</td>
+            <td>${r.wilayah || '-'}</td>
             <td>${parseFloat(r.rainfall_mm).toFixed(2)}</td>
             <td>${parseFloat(r.luas_siram_real_ha).toFixed(2)} / ${parseFloat(r.luas_siram_rencana_ha).toFixed(2)}</td>
             <td>${parseFloat(r.irigasi_mm).toFixed(2)}</td>

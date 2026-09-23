@@ -167,6 +167,7 @@ class WaterBalanceController extends Controller
             ->map(function ($row) {
                 return [
                     'pg' => $row->pg,
+                    'wilayah' => $row->wilayah,
                     'lokasi' => $row->lokasi,
                     'tanggal' => $row->tanggal,
                     'rainfall_mm' => $row->rainfall_mm,
@@ -188,6 +189,7 @@ class WaterBalanceController extends Controller
         $handle = fopen('php://temp', 'w+');
         fputcsv($handle, [
             'pg',
+            'wilayah',
             'lokasi',
             'tanggal',
             'rainfall_mm',
@@ -205,6 +207,7 @@ class WaterBalanceController extends Controller
         foreach ($data as $row) {
             fputcsv($handle, [
                 $row['pg'],
+                $row['wilayah'],
                 $row['lokasi'],
                 $row['tanggal'],
                 $row['rainfall_mm'],

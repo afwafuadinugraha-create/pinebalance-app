@@ -83,6 +83,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                 }
 
                 $pg = trim(preg_replace('/^pg\s*/i', '', $rawPg));
+                $wilayah = $this->nullableString($this->getValue($row, ['wilayah', 'region', 'area'])) ?? '';
                 $lokasi = trim(preg_replace('/^lokasi\s*/i', '', $rawLokasi));
 
                 if ($pg === '' || $lokasi === '') {
@@ -178,6 +179,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                         'tanggal' => $tanggal,
                     ],
                     [
+                        'wilayah' => $wilayah !== '' ? $wilayah : null,
                         'rainfall_mm' => $rainfall,
                         'luas_siram_rencana_ha' => $luasRencana,
                         'luas_siram_real_ha' => $luasReal,
