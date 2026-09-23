@@ -2,12 +2,13 @@ let waterBalanceChartInstance = null;
 let statusPieChartInstance = null;
 let compareBarChartInstance = null;
 
-function renderWilayahAlerts() {
+function renderWilayahAlerts(pg = '') {
     const list = document.getElementById('wilayahAlertsList');
     const countBadge = document.getElementById('wilayahAlertCount');
     if (!list || !countBadge) return;
 
-    fetch('/api/wilayah-alerts')
+    const query = pg ? `?pg=${encodeURIComponent(pg)}` : '';
+    fetch(`/api/wilayah-alerts${query}`)
         .then(response => response.json())
         .then(alerts => {
             if (!Array.isArray(alerts) || alerts.length === 0) {
@@ -116,6 +117,7 @@ function onPGChange() {
 
     renderPGSummaryTable(selectedPG);
     renderPGMonthlyIrrigationTable(selectedPG);
+    renderWilayahAlerts(selectedPG);
 }
 
 renderWilayahAlerts();

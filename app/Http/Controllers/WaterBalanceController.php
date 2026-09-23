@@ -68,9 +68,15 @@ class WaterBalanceController extends Controller
         return response()->json($summary);
     }
 
-    public function getWilayahAlerts(): JsonResponse
+    public function getWilayahAlerts(Request $request): JsonResponse
     {
-        $alerts = DailyWaterBalance::query()
+        $query = DailyWaterBalance::query();
+
+        if ($request->filled('pg')) {
+            $query->where('pg', $request->query('pg'));
+        }
+
+        $alerts = $query
             ->select(
                 'pg',
                 'wilayah',
