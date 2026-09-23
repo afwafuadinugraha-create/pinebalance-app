@@ -29,7 +29,7 @@ function renderWilayahAlerts(pg = '') {
                             <strong>PG ${alert.pg} · ${alert.lokasi} · ${wilayah}</strong>
                             <span>${alert.total_hari_wp} dari ${alert.total_hari} hari At WP (${alert.persentase_wp}%)</span>
                         </div>
-                        <div class="wilayah-alert-action">Perlu tindakan</div>
+                        <div class="wilayah-alert-action">${alert.persentase_wp}%</div>
                     </div>
                 `;
             }).join('');
