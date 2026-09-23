@@ -547,6 +547,19 @@
                 </div>
             </div>
 
+            <section class="card alert-card full-width-card">
+                <div class="card-header">
+                    <div>
+                        <h3><i class="fa-solid fa-bell" style="color: #dc2626;"></i> Wilayah Perlu Tindakan</h3>
+                        <p class="alert-card-subtitle">Wilayah dengan hari terbanyak berada di bawah Wilting Point (WP)</p>
+                    </div>
+                    <span id="wilayahAlertCount" class="alert-count-badge">Memuat...</span>
+                </div>
+                <div id="wilayahAlertsList" class="wilayah-alerts-list">
+                    <div class="alert-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat kondisi wilayah...</div>
+                </div>
+            </section>
+
             <div class="dashboard-vertical-grid">
                 <section class="card full-width-card" style="margin-bottom: 0;">
                     <div class="card-header">

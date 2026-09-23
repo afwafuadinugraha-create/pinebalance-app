@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Imports\WaterBalanceImport;
 use App\Models\DailyWaterBalance;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -65,6 +66,27 @@ class WaterBalanceController extends Controller
             ->get();
 
         return response()->json($summary);
+    }
+
+    public function getWilayahAlerts(): JsonResponse
+    {
+        $alerts = DailyWaterBalance::query()
+            ->select(
+                'pg',
+                'wilayah',
+                DB::raw('COUNT(DISTINCT lokasi) as total_lokasi'),
+                DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as total_hari_wp"),
+                DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as total_hari_mad_wp"),
+                DB::raw("COUNT(DISTINCT CASE WHEN status_zone = 'At WP' THEN lokasi END) as lokasi_wp")
+            )
+            ->groupBy('pg', 'wilayah')
+            ->having('total_hari_wp', '>', 0)
+            ->orderByDesc('total_hari_wp')
+            ->orderByDesc('lokasi_wp')
+            ->limit(8)
+            ->get();
+
+        return response()->json($alerts);
     }
 
     public function getMonthlyIrrigationByPG(Request $request)

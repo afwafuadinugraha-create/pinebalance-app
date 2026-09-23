@@ -2,6 +2,43 @@ let waterBalanceChartInstance = null;
 let statusPieChartInstance = null;
 let compareBarChartInstance = null;
 
+function renderWilayahAlerts() {
+    const list = document.getElementById('wilayahAlertsList');
+    const countBadge = document.getElementById('wilayahAlertCount');
+    if (!list || !countBadge) return;
+
+    fetch('/api/wilayah-alerts')
+        .then(response => response.json())
+        .then(alerts => {
+            if (!Array.isArray(alerts) || alerts.length === 0) {
+                countBadge.innerText = 'Aman';
+                countBadge.className = 'alert-count-badge alert-count-safe';
+                list.innerHTML = '<div class="alert-empty"><i class="fa-solid fa-circle-check"></i><span>Belum ada wilayah dengan status At WP.</span></div>';
+                return;
+            }
+
+            countBadge.innerText = `${alerts.length} Wilayah`;
+            list.innerHTML = alerts.map(alert => {
+                const wilayah = alert.wilayah || 'Wilayah belum diisi';
+                const severity = Number(alert.total_hari_wp) >= 10 ? 'critical' : 'warning';
+                return `
+                    <div class="wilayah-alert-item ${severity}">
+                        <div class="wilayah-alert-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="wilayah-alert-content">
+                            <strong>${wilayah}</strong>
+                            <span>PG ${alert.pg} · ${alert.lokasi_wp} lokasi terdampak · ${alert.total_hari_wp} hari At WP</span>
+                        </div>
+                        <div class="wilayah-alert-action">Perlu tindakan</div>
+                    </div>
+                `;
+            }).join('');
+        })
+        .catch(() => {
+            countBadge.innerText = 'Gagal dimuat';
+            list.innerHTML = '<div class="alert-empty"><i class="fa-solid fa-circle-exclamation"></i><span>Notifikasi wilayah tidak dapat dimuat.</span></div>';
+        });
+}
+
 function toggleSidebar() {
     const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
     const toggle = document.getElementById('sidebarToggle');
@@ -80,6 +117,8 @@ function onPGChange() {
     renderPGSummaryTable(selectedPG);
     renderPGMonthlyIrrigationTable(selectedPG);
 }
+
+renderWilayahAlerts();
 
 function onLokasiChange() {
     const selectedPG = document.getElementById('selectPG').value;
