@@ -566,6 +566,23 @@
                         <h3><i class="fa-solid fa-chart-area" style="color: #0284c7;"></i> Water Balance Trend</h3>
                         <span id="statLokasiBadge" style="font-weight: 700; color: #0284c7; font-size: 13px;">-</span>
                     </div>
+                    <div class="chart-filter-bar">
+                        <label class="chart-filter-field">
+                            <span>Date from</span>
+                            <input type="date" id="chartDateFrom" disabled onchange="applyChartFilters()">
+                        </label>
+                        <label class="chart-filter-field">
+                            <span>Date to</span>
+                            <input type="date" id="chartDateTo" disabled onchange="applyChartFilters()">
+                        </label>
+                        <label class="chart-filter-field chart-status-filter">
+                            <span>Irrigation priority</span>
+                            <select id="chartPriorityFilter" disabled onchange="applyChartFilters()">
+                                <option value="">All priorities</option>
+                            </select>
+                        </label>
+                        <span id="chartFilterSummary" class="chart-filter-summary">Select a location to filter the chart.</span>
+                    </div>
                     <div style="height: 380px; position: relative;">
                         <div class="empty-state-box" id="emptyChartState">
                             <i class="fa-solid fa-chart-line"></i>

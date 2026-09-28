@@ -1,6 +1,7 @@
 let waterBalanceChartInstance = null;
 let statusPieChartInstance = null;
 let compareBarChartInstance = null;
+let currentLocationRows = [];
 
 function renderWilayahAlerts(pg = '') {
     const list = document.getElementById('wilayahAlertsList');
@@ -140,6 +141,7 @@ function onLokasiChange() {
 
 function renderDashboardForLocation(rows, pg, lokasi) {
     if (!rows || rows.length === 0) return;
+    currentLocationRows = rows;
 
     const cleanPG = pg.toString().replace(/^pg\s*/gi, '').trim();
     const cleanLokasi = lokasi.toString().replace(/^lokasi\s*/gi, '').trim();
@@ -166,9 +168,78 @@ function renderDashboardForLocation(rows, pg, lokasi) {
         wbElem.innerHTML = `${currentWB} <small>mm</small>`;
     }
 
-    renderLineChart(rows);
+    setupChartFilters(rows);
+    applyChartFilters();
     renderPieChart(rows);
     renderRawDataTable(rows);
+}
+
+function setupChartFilters(rows) {
+    const dateFrom = document.getElementById('chartDateFrom');
+    const dateTo = document.getElementById('chartDateTo');
+    const priorityFilter = document.getElementById('chartPriorityFilter');
+    if (!dateFrom || !dateTo || !priorityFilter) return;
+
+    const dates = rows.map(row => row.tanggal).filter(Boolean).sort();
+    dateFrom.min = dates[0] || '';
+    dateFrom.max = dates[dates.length - 1] || '';
+    dateFrom.value = dates[0] || '';
+    dateTo.min = dates[0] || '';
+    dateTo.max = dates[dates.length - 1] || '';
+    dateTo.value = dates[dates.length - 1] || '';
+
+    const priorities = [...new Set(rows.map(row => row.status_harian).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    priorityFilter.innerHTML = '<option value="">All priorities</option>';
+    priorities.forEach(priority => {
+        const option = document.createElement('option');
+        option.value = priority;
+        option.textContent = priority.toLowerCase() === 'bongkar' ? 'Bongkar' : priority;
+        priorityFilter.appendChild(option);
+    });
+
+    dateFrom.disabled = false;
+    dateTo.disabled = false;
+    priorityFilter.disabled = false;
+}
+
+function applyChartFilters() {
+    const dateFrom = document.getElementById('chartDateFrom')?.value || '';
+    const dateTo = document.getElementById('chartDateTo')?.value || '';
+    const priority = document.getElementById('chartPriorityFilter')?.value || '';
+    const filteredRows = currentLocationRows.filter(row => {
+        if (dateFrom && row.tanggal < dateFrom) return false;
+        if (dateTo && row.tanggal > dateTo) return false;
+        if (priority && row.status_harian !== priority) return false;
+
+        return true;
+    });
+
+    const summary = document.getElementById('chartFilterSummary');
+    if (summary) {
+        summary.textContent = `${filteredRows.length} of ${currentLocationRows.length} days shown`;
+    }
+
+    const emptyState = document.getElementById('emptyChartState');
+    if (filteredRows.length === 0) {
+        if (waterBalanceChartInstance) {
+            waterBalanceChartInstance.destroy();
+            waterBalanceChartInstance = null;
+        }
+        const canvas = document.getElementById('waterBalanceChart');
+        if (canvas) canvas.style.display = 'none';
+        if (emptyState) {
+            emptyState.style.display = 'flex';
+            emptyState.querySelector('p').textContent = 'No data matches the selected date and priority filters.';
+        }
+
+        return;
+    }
+
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+
+    renderLineChart(filteredRows);
 }
 
 function renderLineChart(rows) {

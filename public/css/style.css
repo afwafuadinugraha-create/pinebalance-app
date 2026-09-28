@@ -170,6 +170,12 @@ body {
 .alert-loading, .alert-empty { color: var(--text-muted); font-size: 13px; padding: 10px 0; display: flex; align-items: center; gap: 8px; }
 .alert-empty i { color: #16a34a; }
 
+.chart-filter-bar { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; padding: 12px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; }
+.chart-filter-field { display: flex; flex-direction: column; gap: 5px; min-width: 150px; color: var(--text-muted); font-size: 11px; font-weight: 700; }
+.chart-filter-field input, .chart-filter-field select { min-height: 36px; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; color: var(--text-primary); font: inherit; font-size: 12px; }
+.chart-status-filter { min-width: 180px; }
+.chart-filter-summary { margin-left: auto; padding-bottom: 9px; color: var(--text-muted); font-size: 11px; font-weight: 600; }
+
 @media (max-width: 768px) {
     .wilayah-alerts-list { grid-template-columns: 1fr; }
 }
@@ -206,4 +212,7 @@ tbody tr:hover { background-color: #f8fafc; }
     .main-wrapper { margin-left: 0; width: 100%; padding: 16px; }
     .kpi-grid { grid-template-columns: 1fr; }
     .top-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .chart-filter-bar { align-items: stretch; }
+    .chart-filter-field, .chart-status-filter { min-width: 0; width: 100%; }
+    .chart-filter-summary { margin-left: 0; padding-bottom: 0; }
 }
