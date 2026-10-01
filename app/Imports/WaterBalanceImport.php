@@ -28,7 +28,6 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
 
     public function collection(Collection $rows): void
     {
-        $importedDatesByLocation = [];
         $headers = [];
         foreach ($rows as $row) {
             if ($row === null || ! is_array($row) && ! ($row instanceof \ArrayAccess)) {
@@ -91,8 +90,6 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
 
                     continue;
                 }
-
-                $importedDatesByLocation[$pg][$lokasi][] = $tanggal;
 
                 $rainfall = floatval($this->getValue($row, ['rainfall_mm', 'rainfall', 'curah_hujan', 'hujan_mm', 'hujan', 'rf_mm', 'rf']));
                 $irigasi = floatval($this->getValue($row, ['irigasi_mm', 'irigasi', 'siram_mm', 'siram', 'irrigation_mm', 'irrigation']));
@@ -203,14 +200,6 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
             }
         }
 
-        foreach ($importedDatesByLocation as $pg => $locations) {
-            foreach ($locations as $lokasi => $importedDates) {
-                DailyWaterBalance::where('pg', $pg)
-                    ->where('lokasi', $lokasi)
-                    ->whereNotIn('tanggal', array_unique($importedDates))
-                    ->delete();
-            }
-        }
     }
 
     public function getSummary(): array
