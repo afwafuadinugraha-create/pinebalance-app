@@ -134,12 +134,29 @@
 
         .full-width-card { width: 100%; }
 
-        .monthly-zone-table { min-width: 900px; }
-        .monthly-zone-table .zone-critical { color: #b91c1c; font-weight: 800; }
-        .monthly-zone-table .zone-drying { color: #a16207; font-weight: 700; }
-        .monthly-zone-table .zone-safe { color: #1d4ed8; font-weight: 700; }
-        .monthly-zone-table .zone-full { color: #15803d; font-weight: 700; }
+        .monthly-zone-table { min-width: 1040px; }
+        .monthly-zone-table tbody tr:hover { background: #f8fafc; }
         .monthly-zone-table tr.all-pg-row { background: #f0fdf4; }
+        .monthly-zone-table tr.all-pg-row:hover { background: #dcfce7; }
+        .monthly-zone-table .zone-cell { min-width: 145px; }
+        .monthly-zone-table .zone-value { font-size: 15px; font-weight: 800; }
+        .monthly-zone-table .zone-count { margin-top: 2px; color: #64748b; font-size: 11px; }
+        .monthly-zone-table .zone-track { height: 5px; margin-top: 7px; overflow: hidden; background: #e2e8f0; border-radius: 4px; }
+        .monthly-zone-table .zone-fill { height: 100%; border-radius: inherit; }
+        .monthly-zone-table .zone-critical .zone-value { color: #b91c1c; }
+        .monthly-zone-table .zone-critical .zone-fill { background: #ef4444; }
+        .monthly-zone-table .zone-drying .zone-value { color: #a16207; }
+        .monthly-zone-table .zone-drying .zone-fill { background: #eab308; }
+        .monthly-zone-table .zone-safe .zone-value { color: #1d4ed8; }
+        .monthly-zone-table .zone-safe .zone-fill { background: #3b82f6; }
+        .monthly-zone-table .zone-full .zone-value { color: #15803d; }
+        .monthly-zone-table .zone-full .zone-fill { background: #22c55e; }
+
+        .monthly-zone-chart-controls { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
+        .monthly-zone-chart-controls label { display: grid; gap: 6px; color: #475569; font-size: 12px; font-weight: 700; }
+        .monthly-zone-chart-controls select { min-width: 240px; max-width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font: inherit; }
+        .monthly-zone-chart-wrap { width: min(100%, 640px); height: 370px; margin: 10px auto 0; position: relative; }
+        .monthly-zone-chart-meta { color: #64748b; font-size: 12px; }
 
         .pie-container-flex {
             display: flex;
@@ -682,25 +699,42 @@
                     <h3 style="color: #0f172a;"><i class="fa-solid fa-calendar-days" style="color: #0284c7;"></i> Monthly Water Zone Distribution</h3>
                 </div>
                 <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
-                    Persentase dihitung dari seluruh catatan harian pada bulan dan PG terkait. Baris ALL PG menggunakan total catatan seluruh PG.
+                    Setiap zona menampilkan persentase dan jumlah catatan dari total catatan harian pada bulan tersebut. PG ditampilkan berurutan per bulan, lalu ALL PG.
                 </p>
                 <div class="table-container">
                     <table class="monthly-zone-table">
                         <thead>
                             <tr>
-                                <th>Month</th>
+                                <th>Bulan</th>
                                 <th>PG</th>
-                                <th style="text-align: center; color: #b91c1c;">Critical (Wilting Point)</th>
-                                <th style="text-align: center; color: #a16207;">Drying (Warning)</th>
-                                <th style="text-align: center; color: #1d4ed8;">Safe (Optimal)</th>
-                                <th style="text-align: center; color: #15803d;">Full (Field Capacity)</th>
-                                <th style="text-align: center;">Total Records</th>
+                                <th style="text-align: center; color: #b91c1c;">Critical · Wilting Point</th>
+                                <th style="text-align: center; color: #a16207;">Drying · Warning</th>
+                                <th style="text-align: center; color: #1d4ed8;">Safe · Optimal</th>
+                                <th style="text-align: center; color: #15803d;">Full · Field Capacity</th>
+                                <th style="text-align: center;">Total catatan</th>
                             </tr>
                         </thead>
                         <tbody id="monthlyZoneSummaryBody">
                             <tr><td colspan="7" style="text-align: center;">Loading monthly summary...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-chart-pie" style="color: #0284c7;"></i> Komposisi Zona Bulanan</h3>
+                    <div class="monthly-zone-chart-controls">
+                        <label for="monthlyZoneChartSelection">PG · Bulan
+                            <select id="monthlyZoneChartSelection" aria-label="Pilih PG dan bulan untuk pie chart">
+                                <option value="">Memuat data...</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <p id="monthlyZoneChartMeta" class="monthly-zone-chart-meta">Pilih periode untuk melihat jumlah dan persentase tiap zona.</p>
+                <div class="monthly-zone-chart-wrap">
+                    <canvas id="monthlyZonePieChart" aria-label="Pie chart 3D komposisi zona air per bulan" role="img"></canvas>
                 </div>
             </section>
 

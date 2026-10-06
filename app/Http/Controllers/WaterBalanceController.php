@@ -88,15 +88,16 @@ class WaterBalanceController extends Controller
             )
             ->groupBy('pg')
             ->groupByRaw($monthExpression)
-            ->orderBy('month')
             ->orderBy('pg')
+            ->orderBy('month')
             ->get();
 
         $rows = [];
         $allPgByMonth = [];
 
-        foreach ($monthlySummary->groupBy('month') as $month => $pgSummaries) {
-            foreach ($pgSummaries as $summary) {
+        foreach ($monthlySummary->groupBy('pg')->sortKeys(SORT_NATURAL | SORT_FLAG_CASE) as $pgSummaries) {
+            foreach ($pgSummaries->sortBy('month') as $summary) {
+                $month = $summary->month;
                 $counts = [
                     'total_days' => (int) $summary->total_days,
                     'count_wp' => (int) $summary->count_wp,
@@ -111,8 +112,11 @@ class WaterBalanceController extends Controller
                     $allPgByMonth[$month][$key] = ($allPgByMonth[$month][$key] ?? 0) + $count;
                 }
             }
+        }
 
-            $rows[] = $this->formatMonthlyZoneSummaryRow($month, 'ALL PG', $allPgByMonth[$month], true);
+        ksort($allPgByMonth);
+        foreach ($allPgByMonth as $month => $counts) {
+            $rows[] = $this->formatMonthlyZoneSummaryRow($month, 'ALL PG', $counts, true);
         }
 
         return response()->json(['rows' => $rows]);

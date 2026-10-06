@@ -1,7 +1,40 @@
 let waterBalanceChartInstance = null;
 let statusPieChartInstance = null;
 let compareBarChartInstance = null;
+let monthlyZonePieChartInstance = null;
 let currentLocationRows = [];
+
+const monthlyZoneChartZones = [
+    { label: 'Critical (Wilting Point)', count: 'count_wp', percentage: 'percentage_wp', color: '#ef4444', side: '#991b1b' },
+    { label: 'Drying (Warning)', count: 'count_mad_wp', percentage: 'percentage_mad_wp', color: '#eab308', side: '#a16207' },
+    { label: 'Safe (Optimal)', count: 'count_fc_mad', percentage: 'percentage_fc_mad', color: '#3b82f6', side: '#1e40af' },
+    { label: 'Full (Field Capacity)', count: 'count_fc', percentage: 'percentage_fc', color: '#22c55e', side: '#166534' },
+];
+
+const monthlyZone3dPlugin = {
+    id: 'monthlyZone3d',
+    beforeDatasetsDraw(chart) {
+        const arcs = chart.getDatasetMeta(0)?.data || [];
+        if (arcs.length === 0) return;
+
+        const context = chart.ctx;
+        context.save();
+        for (let depth = 18; depth > 0; depth--) {
+            arcs.forEach((arc, index) => {
+                if (!arc || arc.hidden) return;
+
+                context.beginPath();
+                context.moveTo(arc.x, arc.y + depth);
+                context.arc(arc.x, arc.y + depth, arc.outerRadius, arc.startAngle, arc.endAngle);
+                context.lineTo(arc.x, arc.y + depth);
+                context.closePath();
+                context.fillStyle = monthlyZoneChartZones[index]?.side || '#475569';
+                context.fill();
+            });
+        }
+        context.restore();
+    },
+};
 
 function renderWilayahAlerts(pg = '') {
     const list = document.getElementById('wilayahAlertsList');
@@ -512,6 +545,7 @@ function renderMonthlyZoneSummary() {
 
             if (rows.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada data bulanan.</td></tr>';
+                renderMonthlyZonePieChart(null);
                 return;
             }
 
@@ -519,36 +553,132 @@ function renderMonthlyZoneSummary() {
                 const tr = document.createElement('tr');
                 if (row.is_all_pg) tr.classList.add('all-pg-row');
 
-                const values = [
-                    formatMonthName(row.month),
-                    row.is_all_pg
-                        ? 'ALL PG'
-                        : `PG ${row.pg.toString().replace(/^pg\s*/i, '').trim()}`,
-                    `${Number(row.percentage_wp).toFixed(1)}%`,
-                    `${Number(row.percentage_mad_wp).toFixed(1)}%`,
-                    `${Number(row.percentage_fc_mad).toFixed(1)}%`,
-                    `${Number(row.percentage_fc).toFixed(1)}%`,
-                    row.total_days,
-                ];
+                const monthCell = document.createElement('td');
+                monthCell.textContent = formatMonthName(row.month);
+                tr.appendChild(monthCell);
 
-                values.forEach((value, index) => {
+                const pgCell = document.createElement('td');
+                pgCell.textContent = row.is_all_pg
+                    ? 'ALL PG'
+                    : `PG ${row.pg.toString().replace(/^pg\s*/i, '').trim()}`;
+                pgCell.style.fontWeight = '800';
+                tr.appendChild(pgCell);
+
+                monthlyZoneChartZones.forEach(zone => {
+                    const percentage = Number(row[zone.percentage]) || 0;
                     const cell = document.createElement('td');
-                    cell.textContent = value;
-                    if (index > 1) cell.style.textAlign = 'center';
-                    if (index === 2) cell.classList.add('zone-critical');
-                    if (index === 3) cell.classList.add('zone-drying');
-                    if (index === 4) cell.classList.add('zone-safe');
-                    if (index === 5) cell.classList.add('zone-full');
-                    if (row.is_all_pg && index === 1) cell.style.fontWeight = '800';
+                    cell.className = `zone-cell ${zone.label.startsWith('Critical') ? 'zone-critical' : zone.label.startsWith('Drying') ? 'zone-drying' : zone.label.startsWith('Safe') ? 'zone-safe' : 'zone-full'}`;
+                    cell.style.textAlign = 'center';
+
+                    const value = document.createElement('div');
+                    value.className = 'zone-value';
+                    value.textContent = `${percentage.toFixed(1)}%`;
+
+                    const count = document.createElement('div');
+                    count.className = 'zone-count';
+                    count.textContent = `${Number(row[zone.count]).toLocaleString('id-ID')} catatan`;
+
+                    const track = document.createElement('div');
+                    track.className = 'zone-track';
+                    track.setAttribute('role', 'progressbar');
+                    track.setAttribute('aria-label', `${zone.label}: ${percentage.toFixed(1)}%`);
+                    track.setAttribute('aria-valuemin', '0');
+                    track.setAttribute('aria-valuemax', '100');
+                    track.setAttribute('aria-valuenow', percentage.toString());
+
+                    const fill = document.createElement('div');
+                    fill.className = 'zone-fill';
+                    fill.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
+                    track.appendChild(fill);
+                    cell.append(value, count, track);
                     tr.appendChild(cell);
                 });
 
+                const totalCell = document.createElement('td');
+                totalCell.textContent = Number(row.total_days).toLocaleString('id-ID');
+                totalCell.style.textAlign = 'center';
+                totalCell.style.fontWeight = '800';
+                tr.appendChild(totalCell);
                 tbody.appendChild(tr);
             });
+
+            renderMonthlyZonePieSelector(rows);
         })
         .catch(() => {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Ringkasan bulanan gagal dimuat.</td></tr>';
         });
+}
+
+function renderMonthlyZonePieSelector(rows) {
+    const selection = document.getElementById('monthlyZoneChartSelection');
+    if (!selection) return;
+
+    selection.innerHTML = '';
+    rows.forEach((row, index) => {
+        const option = document.createElement('option');
+        option.value = index.toString();
+        const pgLabel = row.is_all_pg ? 'ALL PG' : `PG ${row.pg.toString().replace(/^pg\s*/i, '').trim()}`;
+        option.textContent = `${pgLabel} · ${formatMonthName(row.month)}`;
+        selection.appendChild(option);
+    });
+
+    selection.onchange = () => renderMonthlyZonePieChart(rows[Number(selection.value)]);
+    selection.selectedIndex = 0;
+    renderMonthlyZonePieChart(rows[0]);
+}
+
+function renderMonthlyZonePieChart(row) {
+    const canvas = document.getElementById('monthlyZonePieChart');
+    const meta = document.getElementById('monthlyZoneChartMeta');
+    if (!canvas) return;
+
+    if (monthlyZonePieChartInstance) {
+        monthlyZonePieChartInstance.destroy();
+        monthlyZonePieChartInstance = null;
+    }
+
+    if (!row) {
+        if (meta) meta.textContent = 'Belum ada data untuk ditampilkan.';
+        return;
+    }
+
+    const pgLabel = row.is_all_pg ? 'ALL PG' : `PG ${row.pg.toString().replace(/^pg\s*/i, '').trim()}`;
+    if (meta) {
+        meta.textContent = `${pgLabel} · ${formatMonthName(row.month)} · ${Number(row.total_days).toLocaleString('id-ID')} catatan harian`;
+    }
+
+    monthlyZonePieChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'pie',
+        data: {
+            labels: monthlyZoneChartZones.map(zone => zone.label),
+            datasets: [{
+                data: monthlyZoneChartZones.map(zone => Number(row[zone.count]) || 0),
+                backgroundColor: monthlyZoneChartZones.map(zone => zone.color),
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                hoverOffset: 8,
+            }],
+        },
+        plugins: [monthlyZone3dPlugin],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 18, bottom: 18 } },
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+                tooltip: {
+                    callbacks: {
+                        label(context) {
+                            const zone = monthlyZoneChartZones[context.dataIndex];
+                            const count = Number(row[zone.count]) || 0;
+                            const percentage = Number(row[zone.percentage]) || 0;
+                            return `${zone.label}: ${count.toLocaleString('id-ID')} catatan (${percentage.toFixed(1)}%)`;
+                        },
+                    },
+                },
+            },
+        },
+    });
 }
 
 function renderCompareBarChart(summaryList, cleanPG) {
