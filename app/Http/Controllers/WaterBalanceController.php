@@ -68,6 +68,72 @@ class WaterBalanceController extends Controller
         return response()->json($summary);
     }
 
+    public function getMonthlyZoneSummary(): JsonResponse
+    {
+        $monthExpression = match (DB::connection()->getDriverName()) {
+            'pgsql' => "TO_CHAR(tanggal, 'YYYY-MM')",
+            'mysql', 'mariadb' => "DATE_FORMAT(tanggal, '%Y-%m')",
+            default => "strftime('%Y-%m', tanggal)",
+        };
+
+        $monthlySummary = DailyWaterBalance::query()
+            ->select(
+                'pg',
+                DB::raw("{$monthExpression} as month"),
+                DB::raw('COUNT(*) as total_days'),
+                DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as count_wp"),
+                DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
+                DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN 1 ELSE 0 END) as count_fc_mad"),
+                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc")
+            )
+            ->groupBy('pg')
+            ->groupByRaw($monthExpression)
+            ->orderBy('month')
+            ->orderBy('pg')
+            ->get();
+
+        $rows = [];
+        $allPgByMonth = [];
+
+        foreach ($monthlySummary->groupBy('month') as $month => $pgSummaries) {
+            foreach ($pgSummaries as $summary) {
+                $counts = [
+                    'total_days' => (int) $summary->total_days,
+                    'count_wp' => (int) $summary->count_wp,
+                    'count_mad_wp' => (int) $summary->count_mad_wp,
+                    'count_fc_mad' => (int) $summary->count_fc_mad,
+                    'count_fc' => (int) $summary->count_fc,
+                ];
+
+                $rows[] = $this->formatMonthlyZoneSummaryRow($month, $summary->pg, $counts, false);
+
+                foreach ($counts as $key => $count) {
+                    $allPgByMonth[$month][$key] = ($allPgByMonth[$month][$key] ?? 0) + $count;
+                }
+            }
+
+            $rows[] = $this->formatMonthlyZoneSummaryRow($month, 'ALL PG', $allPgByMonth[$month], true);
+        }
+
+        return response()->json(['rows' => $rows]);
+    }
+
+    private function formatMonthlyZoneSummaryRow(string $month, string $pg, array $counts, bool $isAllPg): array
+    {
+        $totalDays = $counts['total_days'];
+
+        return [
+            'month' => $month,
+            'pg' => $pg,
+            'is_all_pg' => $isAllPg,
+            ...$counts,
+            'percentage_wp' => $totalDays > 0 ? round($counts['count_wp'] / $totalDays * 100, 1) : 0,
+            'percentage_mad_wp' => $totalDays > 0 ? round($counts['count_mad_wp'] / $totalDays * 100, 1) : 0,
+            'percentage_fc_mad' => $totalDays > 0 ? round($counts['count_fc_mad'] / $totalDays * 100, 1) : 0,
+            'percentage_fc' => $totalDays > 0 ? round($counts['count_fc'] / $totalDays * 100, 1) : 0,
+        ];
+    }
+
     public function getWilayahAlerts(Request $request): JsonResponse
     {
         $query = DailyWaterBalance::query();

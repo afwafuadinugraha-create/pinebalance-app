@@ -122,6 +122,7 @@ function onPGChange() {
 }
 
 renderWilayahAlerts();
+renderMonthlyZoneSummary();
 
 function onLokasiChange() {
     const selectedPG = document.getElementById('selectPG').value;
@@ -497,6 +498,57 @@ function renderPGSummaryTable(pg) {
             renderCompareBarChart(summaryList, cleanPG);
         })
         .catch(err => console.error('Error fetching summary:', err));
+}
+
+function renderMonthlyZoneSummary() {
+    const tbody = document.getElementById('monthlyZoneSummaryBody');
+    if (!tbody) return;
+
+    fetch('/api/monthly-zone-summary')
+        .then(response => response.json())
+        .then(result => {
+            const rows = result.rows || [];
+            tbody.innerHTML = '';
+
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada data bulanan.</td></tr>';
+                return;
+            }
+
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                if (row.is_all_pg) tr.classList.add('all-pg-row');
+
+                const values = [
+                    formatMonthName(row.month),
+                    row.is_all_pg
+                        ? 'ALL PG'
+                        : `PG ${row.pg.toString().replace(/^pg\s*/i, '').trim()}`,
+                    `${Number(row.percentage_wp).toFixed(1)}%`,
+                    `${Number(row.percentage_mad_wp).toFixed(1)}%`,
+                    `${Number(row.percentage_fc_mad).toFixed(1)}%`,
+                    `${Number(row.percentage_fc).toFixed(1)}%`,
+                    row.total_days,
+                ];
+
+                values.forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    if (index > 1) cell.style.textAlign = 'center';
+                    if (index === 2) cell.classList.add('zone-critical');
+                    if (index === 3) cell.classList.add('zone-drying');
+                    if (index === 4) cell.classList.add('zone-safe');
+                    if (index === 5) cell.classList.add('zone-full');
+                    if (row.is_all_pg && index === 1) cell.style.fontWeight = '800';
+                    tr.appendChild(cell);
+                });
+
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(() => {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Ringkasan bulanan gagal dimuat.</td></tr>';
+        });
 }
 
 function renderCompareBarChart(summaryList, cleanPG) {

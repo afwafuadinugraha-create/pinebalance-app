@@ -134,6 +134,13 @@
 
         .full-width-card { width: 100%; }
 
+        .monthly-zone-table { min-width: 900px; }
+        .monthly-zone-table .zone-critical { color: #b91c1c; font-weight: 800; }
+        .monthly-zone-table .zone-drying { color: #a16207; font-weight: 700; }
+        .monthly-zone-table .zone-safe { color: #1d4ed8; font-weight: 700; }
+        .monthly-zone-table .zone-full { color: #15803d; font-weight: 700; }
+        .monthly-zone-table tr.all-pg-row { background: #f0fdf4; }
+
         .pie-container-flex {
             display: flex;
             align-items: center;
@@ -671,6 +678,33 @@
         <!-- TAB 3: SUMMARY & ANALYTICS -->
         <div id="tab-summary" class="tab-page">
             <section class="card">
+                <div class="card-header">
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-calendar-days" style="color: #0284c7;"></i> Monthly Water Zone Distribution</h3>
+                </div>
+                <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
+                    Persentase dihitung dari seluruh catatan harian pada bulan dan PG terkait. Baris ALL PG menggunakan total catatan seluruh PG.
+                </p>
+                <div class="table-container">
+                    <table class="monthly-zone-table">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>PG</th>
+                                <th style="text-align: center; color: #b91c1c;">Critical (Wilting Point)</th>
+                                <th style="text-align: center; color: #a16207;">Drying (Warning)</th>
+                                <th style="text-align: center; color: #1d4ed8;">Safe (Optimal)</th>
+                                <th style="text-align: center; color: #15803d;">Full (Field Capacity)</th>
+                                <th style="text-align: center;">Total Records</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthlyZoneSummaryBody">
+                            <tr><td colspan="7" style="text-align: center;">Loading monthly summary...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="color: #0f172a;"><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Location Water Health Ranking</h3>
                     <span id="summaryPgBadge" style="font-weight: 700; color: #0284c7; font-size: 13px;">-</span>
@@ -831,6 +865,9 @@
                     }
                     if (typeof onLokasiChange === 'function') {
                         onLokasiChange();
+                    }
+                    if (typeof renderMonthlyZoneSummary === 'function') {
+                        renderMonthlyZoneSummary();
                     }
                 }, 500);
             } catch (error) {
