@@ -83,4 +83,40 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('report.0.months.2026-08.count', 1)
             ->assertJsonPath('report.1.months.2026-08.count', 1);
     }
+
+    public function test_selected_daily_status_filters_all_summary_aggregations(): void
+    {
+        foreach ([
+            ['tanggal' => '2026-08-01', 'status' => 'P1', 'zone' => 'At WP', 'irigasi' => 20],
+            ['tanggal' => '2026-08-02', 'status' => 'P2', 'zone' => 'At FC', 'irigasi' => 30],
+        ] as $record) {
+            DailyWaterBalance::create([
+                'pg' => '01',
+                'lokasi' => 'A',
+                'tanggal' => $record['tanggal'],
+                'irigasi_mm' => $record['irigasi'],
+                'water_balance_mm' => 50,
+                'status_zone' => $record['zone'],
+                'status_harian' => $record['status'],
+            ]);
+        }
+
+        $this->getJson('/api/monthly-zone-summary?status_harian=P1')
+            ->assertOk()
+            ->assertJsonCount(2, 'rows')
+            ->assertJsonPath('rows.0.total_days', 1)
+            ->assertJsonPath('rows.0.percentage_wp', 100)
+            ->assertJsonPath('rows.1.pg', 'ALL PG')
+            ->assertJsonPath('rows.1.total_days', 1);
+
+        $this->getJson('/api/pg-summary?pg=01&status_harian=P1')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.total_hari', 1)
+            ->assertJsonPath('0.count_wp', 1);
+
+        $this->getJson('/api/pg-irrigation-monthly?pg=01&status_harian=P1')
+            ->assertOk()
+            ->assertJsonPath('report.0.months.2026-08.count', 1);
+    }
 }

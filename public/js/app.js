@@ -462,13 +462,16 @@ function renderRawDataTable(rows) {
     });
 }
 
-function renderPGSummaryTable(pg) {
+function renderPGSummaryTable(pg, status = '') {
     const isAllPG = !pg || pg.toLowerCase() === 'all';
     const cleanPG = isAllPG ? 'ALL PG' : pg.toString().replace(/^pg\s*/gi, '').trim();
     const summaryPgBadge = document.getElementById('summaryPgBadge');
     if (summaryPgBadge) summaryPgBadge.innerText = isAllPG ? 'ALL PG' : `PG ${cleanPG}`;
 
-    fetch(`/api/pg-summary?pg=${encodeURIComponent(isAllPG ? 'all' : pg)}`)
+    const params = new URLSearchParams({ pg: isAllPG ? 'all' : pg });
+    if (status) params.set('status_harian', status);
+
+    fetch(`/api/pg-summary?${params}`)
         .then(response => response.json())
         .then(summaryList => {
             const summaryTbody = document.getElementById('summaryTableBody');
@@ -513,34 +516,19 @@ function renderMonthlyZoneSummary() {
     const selection = document.getElementById('monthlyZonePgSelection');
     if (!tbody || !selection) return;
 
-    fetch('/api/monthly-zone-summary')
+    const status = document.getElementById('monthlyZoneStatusSelection')?.value || '';
+    const query = status ? `?status_harian=${encodeURIComponent(status)}` : '';
+
+    fetch(`/api/monthly-zone-summary${query}`)
         .then(response => response.json())
         .then(result => {
             const rows = result.rows || [];
             if (rows.length === 0) {
-                selection.innerHTML = '<option value="">Tidak ada data</option>';
-                renderMonthlyZoneView([], '');
+                renderMonthlyZoneView([], selection.value);
+                onAnalyticsPGChange();
                 return;
             }
 
-            const previousSelection = selection.value;
-            const pgValues = [...new Set(rows.filter(row => !row.is_all_pg).map(row => String(row.pg)))];
-            selection.replaceChildren();
-
-            pgValues.forEach(pg => {
-                const option = document.createElement('option');
-                option.value = `pg:${pg}`;
-                option.textContent = formatMonthlyZonePg(pg);
-                selection.appendChild(option);
-            });
-
-            const allOption = document.createElement('option');
-            allOption.value = '__all__';
-            allOption.textContent = 'ALL PG';
-            selection.appendChild(allOption);
-
-            const hasPreviousSelection = [...selection.options].some(option => option.value === previousSelection);
-            selection.value = hasPreviousSelection ? previousSelection : '__all__';
             selection.onchange = () => {
                 renderMonthlyZoneView(rows, selection.value);
                 onAnalyticsPGChange();
@@ -549,9 +537,13 @@ function renderMonthlyZoneSummary() {
             onAnalyticsPGChange();
         })
         .catch(() => {
-            selection.innerHTML = '<option value="">Gagal memuat data</option>';
-            renderMonthlyZoneView([], '');
+            renderMonthlyZoneView([], selection.value);
+            onAnalyticsPGChange();
         });
+}
+
+function onAnalyticsStatusChange() {
+    renderMonthlyZoneSummary();
 }
 
 function onAnalyticsPGChange() {
@@ -559,8 +551,9 @@ function onAnalyticsPGChange() {
     if (!selection || !selection.value) return;
 
     const selectedPG = selection.value === '__all__' ? 'all' : selection.value.replace(/^pg:/, '');
-    renderPGSummaryTable(selectedPG);
-    renderPGMonthlyIrrigationTable(selectedPG);
+    const selectedStatus = document.getElementById('monthlyZoneStatusSelection')?.value || '';
+    renderPGSummaryTable(selectedPG, selectedStatus);
+    renderPGMonthlyIrrigationTable(selectedPG, selectedStatus);
 }
 
 function renderMonthlyZoneView(rows, selectionValue) {
@@ -772,10 +765,12 @@ function renderCompareBarChart(summaryList, cleanPG, isAllPG = false) {
     });
 }
 
-function renderPGMonthlyIrrigationTable(pg) {
+function renderPGMonthlyIrrigationTable(pg, status = '') {
     const isAllPG = !pg || pg.toLowerCase() === 'all';
+    const params = new URLSearchParams({ pg: isAllPG ? 'all' : pg });
+    if (status) params.set('status_harian', status);
 
-    fetch(`/api/pg-irrigation-monthly?pg=${encodeURIComponent(isAllPG ? 'all' : pg)}`)
+    fetch(`/api/pg-irrigation-monthly?${params}`)
         .then(response => response.json())
         .then(res => {
             const months = res.months || [];

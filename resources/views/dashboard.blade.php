@@ -712,7 +712,23 @@
                     <div class="monthly-zone-controls">
                         <label for="monthlyZonePgSelection">Pilih PG untuk semua ringkasan
                             <select id="monthlyZonePgSelection" aria-label="Pilih PG untuk ringkasan analitik">
-                                <option value="">Memuat data...</option>
+                                <option value="__all__" selected>ALL PG</option>
+                                @if(isset($pgList))
+                                    @foreach($pgList as $item)
+                                        @php($cleanItem = trim(preg_replace('/^pg\s*/i', '', $item)))
+                                        <option value="pg:{{ $item }}">PG {{ $cleanItem }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </label>
+                        <label for="monthlyZoneStatusSelection">Status harian
+                            <select id="monthlyZoneStatusSelection" aria-label="Filter status harian untuk semua ringkasan" onchange="onAnalyticsPGChange()">
+                                <option value="" selected>Semua status</option>
+                                @if(isset($statusList))
+                                    @foreach($statusList as $status)
+                                        <option value="{{ $status }}">{{ $status }}</option>
+                                    @endforeach
+                                @endif
                             </select>
                         </label>
                     </div>

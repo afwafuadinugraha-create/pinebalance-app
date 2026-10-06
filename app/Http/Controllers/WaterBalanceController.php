@@ -18,7 +18,16 @@ class WaterBalanceController extends Controller
             ->orderBy('pg', 'asc')
             ->pluck('pg');
 
-        return view('dashboard', compact('pgList'));
+        $statusList = DailyWaterBalance::query()
+            ->whereNotNull('status_harian')
+            ->where('status_harian', '<>', '')
+            ->select('status_harian')
+            ->distinct()
+            ->pluck('status_harian')
+            ->all();
+        usort($statusList, 'strnatcasecmp');
+
+        return view('dashboard', compact('pgList', 'statusList'));
     }
 
     public function getLokasiByPG(Request $request)
@@ -56,6 +65,10 @@ class WaterBalanceController extends Controller
             $query->where('pg', $pg);
         }
 
+        if ($request->filled('status_harian')) {
+            $query->where('status_harian', $request->query('status_harian'));
+        }
+
         $summary = $query
             ->select(
                 'pg',
@@ -74,7 +87,7 @@ class WaterBalanceController extends Controller
         return response()->json($summary);
     }
 
-    public function getMonthlyZoneSummary(): JsonResponse
+    public function getMonthlyZoneSummary(Request $request): JsonResponse
     {
         $monthExpression = match (DB::connection()->getDriverName()) {
             'pgsql' => "TO_CHAR(tanggal, 'YYYY-MM')",
@@ -82,7 +95,13 @@ class WaterBalanceController extends Controller
             default => "strftime('%Y-%m', tanggal)",
         };
 
-        $monthlySummary = DailyWaterBalance::query()
+        $query = DailyWaterBalance::query();
+
+        if ($request->filled('status_harian')) {
+            $query->where('status_harian', $request->query('status_harian'));
+        }
+
+        $monthlySummary = $query
             ->select(
                 'pg',
                 DB::raw("{$monthExpression} as month"),
@@ -183,6 +202,10 @@ class WaterBalanceController extends Controller
 
         if (! $isAllPgs) {
             $query->where('pg', $pg);
+        }
+
+        if ($request->filled('status_harian')) {
+            $query->where('status_harian', $request->query('status_harian'));
         }
 
         // Ambil seluruh data tanggal untuk mendeteksi rentang bulan secara menyeluruh (termasuk Mei)
