@@ -722,7 +722,7 @@
                             </select>
                         </label>
                         <label for="monthlyZoneStatusSelection">Status harian
-                            <select id="monthlyZoneStatusSelection" aria-label="Filter status harian untuk semua ringkasan" onchange="onAnalyticsPGChange()">
+                            <select id="monthlyZoneStatusSelection" aria-label="Filter status harian untuk semua ringkasan" onchange="onAnalyticsStatusChange()">
                                 <option value="" selected>Semua status</option>
                                 @if(isset($statusList))
                                     @foreach($statusList as $status)
