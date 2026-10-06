@@ -124,8 +124,6 @@ function onPGChange() {
         })
         .catch(err => console.error('Error fetching lokasi:', err));
 
-    renderPGSummaryTable(selectedPG);
-    renderPGMonthlyIrrigationTable(selectedPG);
     renderWilayahAlerts(selectedPG);
 }
 
@@ -465,11 +463,12 @@ function renderRawDataTable(rows) {
 }
 
 function renderPGSummaryTable(pg) {
-    const cleanPG = pg.toString().replace(/^pg\s*/gi, '').trim();
+    const isAllPG = !pg || pg.toLowerCase() === 'all';
+    const cleanPG = isAllPG ? 'ALL PG' : pg.toString().replace(/^pg\s*/gi, '').trim();
     const summaryPgBadge = document.getElementById('summaryPgBadge');
-    if (summaryPgBadge) summaryPgBadge.innerText = `PG ${cleanPG}`;
+    if (summaryPgBadge) summaryPgBadge.innerText = isAllPG ? 'ALL PG' : `PG ${cleanPG}`;
 
-    fetch(`/api/pg-summary?pg=${encodeURIComponent(pg)}`)
+    fetch(`/api/pg-summary?pg=${encodeURIComponent(isAllPG ? 'all' : pg)}`)
         .then(response => response.json())
         .then(summaryList => {
             const summaryTbody = document.getElementById('summaryTableBody');
@@ -485,6 +484,7 @@ function renderPGSummaryTable(pg) {
                 const total = parseInt(item.total_hari);
                 const getPerc = (val) => ((val / total) * 100).toFixed(1);
                 const cleanLokasi = item.lokasi.toString().replace(/^lokasi\s*/gi, '').trim();
+                const rowPG = item.pg ? formatMonthlyZonePg(item.pg) : `PG ${cleanPG}`;
 
                 const isCritical = parseInt(item.count_wp) > 0;
                 const rowStyle = index === 0 && isCritical ? 'background: #fef2f2;' : '';
@@ -493,7 +493,7 @@ function renderPGSummaryTable(pg) {
                 tr.style = rowStyle;
                 tr.innerHTML = `
                     <td style="text-align: center; font-weight: 800;">${index + 1}</td>
-                    <td style="font-weight: 700;">PG ${cleanPG} - Location ${cleanLokasi}</td>
+                    <td style="font-weight: 700;">${rowPG} - Location ${cleanLokasi}</td>
                     <td style="text-align: center;">${item.count_fc} Days (${getPerc(item.count_fc)}%)</td>
                     <td style="text-align: center;">${item.count_fc_mad} Days (${getPerc(item.count_fc_mad)}%)</td>
                     <td style="text-align: center;">${item.count_mad_wp} Days (${getPerc(item.count_mad_wp)}%)</td>
@@ -503,7 +503,7 @@ function renderPGSummaryTable(pg) {
                 summaryTbody.appendChild(tr);
             });
 
-            renderCompareBarChart(summaryList, cleanPG);
+            renderCompareBarChart(summaryList, cleanPG, isAllPG);
         })
         .catch(err => console.error('Error fetching summary:', err));
 }
@@ -540,14 +540,27 @@ function renderMonthlyZoneSummary() {
             selection.appendChild(allOption);
 
             const hasPreviousSelection = [...selection.options].some(option => option.value === previousSelection);
-            selection.value = hasPreviousSelection ? previousSelection : (pgValues.length > 0 ? `pg:${pgValues[0]}` : '__all__');
-            selection.onchange = () => renderMonthlyZoneView(rows, selection.value);
+            selection.value = hasPreviousSelection ? previousSelection : '__all__';
+            selection.onchange = () => {
+                renderMonthlyZoneView(rows, selection.value);
+                onAnalyticsPGChange();
+            };
             renderMonthlyZoneView(rows, selection.value);
+            onAnalyticsPGChange();
         })
         .catch(() => {
             selection.innerHTML = '<option value="">Gagal memuat data</option>';
             renderMonthlyZoneView([], '');
         });
+}
+
+function onAnalyticsPGChange() {
+    const selection = document.getElementById('monthlyZonePgSelection');
+    if (!selection || !selection.value) return;
+
+    const selectedPG = selection.value === '__all__' ? 'all' : selection.value.replace(/^pg:/, '');
+    renderPGSummaryTable(selectedPG);
+    renderPGMonthlyIrrigationTable(selectedPG);
 }
 
 function renderMonthlyZoneView(rows, selectionValue) {
@@ -712,7 +725,7 @@ function renderMonthlyZonePieChart(rows, pgLabel) {
     });
 }
 
-function renderCompareBarChart(summaryList, cleanPG) {
+function renderCompareBarChart(summaryList, cleanPG, isAllPG = false) {
     const emptyState = document.getElementById('emptyCompareChartState');
     if (emptyState) emptyState.style.display = 'none';
 
@@ -720,7 +733,12 @@ function renderCompareBarChart(summaryList, cleanPG) {
     if (!canvas) return;
     canvas.style.display = 'block';
 
-    const labels = summaryList.map(item => `Location ${item.lokasi.replace(/^lokasi\s*/gi, '').trim()}`);
+    const labels = summaryList.map(item => {
+        const location = item.lokasi.replace(/^lokasi\s*/gi, '').trim();
+        const pgLabel = item.pg ? formatMonthlyZonePg(item.pg) : `PG ${cleanPG}`;
+
+        return isAllPG ? `${pgLabel} · ${location}` : `Location ${location}`;
+    });
     const dataFC = summaryList.map(item => parseInt(item.count_fc));
     const dataFCMAD = summaryList.map(item => parseInt(item.count_fc_mad));
     const dataMADWP = summaryList.map(item => parseInt(item.count_mad_wp));
@@ -755,13 +773,13 @@ function renderCompareBarChart(summaryList, cleanPG) {
 }
 
 function renderPGMonthlyIrrigationTable(pg) {
-    const cleanPG = pg.toString().replace(/^pg\s*/gi, '').trim();
+    const isAllPG = !pg || pg.toLowerCase() === 'all';
 
-    fetch(`/api/pg-irrigation-monthly?pg=${encodeURIComponent(pg)}`)
+    fetch(`/api/pg-irrigation-monthly?pg=${encodeURIComponent(isAllPG ? 'all' : pg)}`)
         .then(response => response.json())
         .then(res => {
             const months = res.months || [];
-            const report = res.report || {};
+            const report = res.report || [];
 
             const headerTr = document.getElementById('irrigationMonthlyHeader');
             const tbody = document.getElementById('irrigationMonthlyBody');
@@ -776,21 +794,19 @@ function renderPGMonthlyIrrigationTable(pg) {
             headerTr.innerHTML = headerHTML;
 
             tbody.innerHTML = '';
-            const lokasiKeys = Object.keys(report);
-
-            if (lokasiKeys.length === 0) {
+            if (report.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${months.length + 3}" style="text-align:center;">No irrigation history for this PG.</td></tr>`;
                 return;
             }
 
-            lokasiKeys.forEach(lokasi => {
-                const cleanLokasi = lokasi.toString().replace(/^lokasi\s*/gi, '').trim();
+            report.forEach(locationSummary => {
+                const cleanLokasi = locationSummary.lokasi.toString().replace(/^lokasi\s*/gi, '').trim();
                 let rowTotal = 0;
 
-                let rowHTML = `<td style="font-weight: 700;">PG ${cleanPG} - Location ${cleanLokasi}</td>`;
+                let rowHTML = `<td style="font-weight: 700;">${formatMonthlyZonePg(locationSummary.pg)} - Location ${cleanLokasi}</td>`;
 
                 months.forEach(m => {
-                    const monthlyData = report[lokasi][m];
+                    const monthlyData = locationSummary.months[m];
                     const hasData = monthlyData !== undefined;
                     const count = monthlyData?.count || 0;
                     rowTotal += count;

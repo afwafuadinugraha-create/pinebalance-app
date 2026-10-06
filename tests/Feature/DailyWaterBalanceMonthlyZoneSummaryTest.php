@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\DailyWaterBalance;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_monthly_zone_percentages_include_weighted_all_pg_totals(): void
     {
         foreach ([
@@ -46,5 +49,38 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('rows.5.percentage_wp', 50)
             ->assertJsonPath('rows.5.percentage_fc', 25)
             ->assertJsonPath('rows.5.percentage_fc_mad', 25);
+    }
+
+    public function test_all_pg_ranking_and_irrigation_keep_same_named_locations_separate(): void
+    {
+        foreach ([
+            ['pg' => '01', 'zone' => 'At FC'],
+            ['pg' => '02', 'zone' => 'At WP'],
+        ] as $record) {
+            DailyWaterBalance::create([
+                'pg' => $record['pg'],
+                'lokasi' => 'A',
+                'tanggal' => '2026-08-01',
+                'irigasi_mm' => 10,
+                'water_balance_mm' => 50,
+                'status_zone' => $record['zone'],
+            ]);
+        }
+
+        $this->getJson('/api/pg-summary?pg=all')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonPath('0.pg', '02')
+            ->assertJsonPath('1.pg', '01');
+
+        $this->getJson('/api/pg-irrigation-monthly?pg=all')
+            ->assertOk()
+            ->assertJsonCount(2, 'report')
+            ->assertJsonPath('report.0.pg', '01')
+            ->assertJsonPath('report.0.lokasi', 'A')
+            ->assertJsonPath('report.1.pg', '02')
+            ->assertJsonPath('report.1.lokasi', 'A')
+            ->assertJsonPath('report.0.months.2026-08.count', 1)
+            ->assertJsonPath('report.1.months.2026-08.count', 1);
     }
 }

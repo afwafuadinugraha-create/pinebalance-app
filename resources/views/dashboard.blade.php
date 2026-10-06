@@ -708,18 +708,25 @@
         <div id="tab-summary" class="tab-page">
             <section class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                    <h3 style="color: #0f172a;"><i class="fa-solid fa-calendar-days" style="color: #0284c7;"></i> Monthly Water Zone Distribution</h3>
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-filter" style="color: #0284c7;"></i> Summary PG Filter</h3>
                     <div class="monthly-zone-controls">
-                        <label for="monthlyZonePgSelection">Pilih PG
-                            <select id="monthlyZonePgSelection" aria-label="Pilih PG untuk ringkasan zona bulanan">
+                        <label for="monthlyZonePgSelection">Pilih PG untuk semua ringkasan
+                            <select id="monthlyZonePgSelection" aria-label="Pilih PG untuk ringkasan analitik">
                                 <option value="">Memuat data...</option>
                             </select>
                         </label>
                     </div>
                 </div>
+                <p style="font-size: 12px; color: #64748b; margin: -8px 0 0;">Pilihan ini mengatur ranking lokasi, perbandingan status air, frekuensi irigasi, dan distribusi zona bulanan. Terpisah dari filter utama Dashboard.</p>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-calendar-days" style="color: #0284c7;"></i> Monthly Water Zone Distribution</h3>
+                </div>
                 <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
-                    <strong id="monthlyZoneSelectedPgLabel">Pilih PG untuk melihat ringkasan bulanan.</strong>
-                    Setiap zona menampilkan persentase dan jumlah catatan harian pada bulan tersebut.
+                    <strong id="monthlyZoneSelectedPgLabel">Pilih PG untuk melihat ringkasan.</strong>
+                    Pilihan ini juga mengatur ranking lokasi, perbandingan status, dan frekuensi irigasi. Setiap zona menampilkan persentase dan jumlah catatan harian per bulan.
                 </p>
                 <div class="table-container">
                     <table class="monthly-zone-table">

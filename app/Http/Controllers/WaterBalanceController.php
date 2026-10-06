@@ -50,9 +50,15 @@ class WaterBalanceController extends Controller
     public function getSummaryByPG(Request $request)
     {
         $pg = $request->query('pg');
+        $query = DailyWaterBalance::query();
 
-        $summary = DailyWaterBalance::where('pg', $pg)
+        if ($pg && strtolower($pg) !== 'all') {
+            $query->where('pg', $pg);
+        }
+
+        $summary = $query
             ->select(
+                'pg',
                 'lokasi',
                 DB::raw('COUNT(*) as total_hari'),
                 DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc"),
@@ -60,7 +66,7 @@ class WaterBalanceController extends Controller
                 DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
                 DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as count_wp")
             )
-            ->groupBy('lokasi')
+            ->groupBy('pg', 'lokasi')
             ->orderBy('count_wp', 'desc')
             ->orderBy('count_mad_wp', 'desc')
             ->get();
@@ -172,38 +178,51 @@ class WaterBalanceController extends Controller
     public function getMonthlyIrrigationByPG(Request $request)
     {
         $pg = $request->query('pg');
+        $isAllPgs = ! $pg || strtolower($pg) === 'all';
+        $query = DailyWaterBalance::query();
+
+        if (! $isAllPgs) {
+            $query->where('pg', $pg);
+        }
 
         // Ambil seluruh data tanggal untuk mendeteksi rentang bulan secara menyeluruh (termasuk Mei)
-        $allData = DailyWaterBalance::where('pg', $pg)
-            ->select('lokasi', 'tanggal', 'irigasi_mm', 'status_harian')
+        $allData = $query
+            ->select('pg', 'lokasi', 'tanggal', 'irigasi_mm', 'status_harian')
+            ->orderBy('pg')
+            ->orderBy('lokasi')
+            ->orderBy('tanggal')
             ->get();
 
         $grouped = [];
         $allMonths = [];
 
         foreach ($allData as $row) {
-            $lokasi = $row->lokasi;
+            $locationKey = $row->pg.'|'.$row->lokasi;
             $monthKey = substr($row->tanggal, 0, 7); // Format "YYYY-MM"
 
             $allMonths[$monthKey] = true;
 
-            if (! isset($grouped[$lokasi])) {
-                $grouped[$lokasi] = [];
+            if (! isset($grouped[$locationKey])) {
+                $grouped[$locationKey] = [
+                    'pg' => $row->pg,
+                    'lokasi' => $row->lokasi,
+                    'months' => [],
+                ];
             }
 
-            if (! isset($grouped[$lokasi][$monthKey])) {
-                $grouped[$lokasi][$monthKey] = [
+            if (! isset($grouped[$locationKey]['months'][$monthKey])) {
+                $grouped[$locationKey]['months'][$monthKey] = [
                     'count' => 0,
                     'bongkar' => false,
                 ];
             }
 
             if (floatval($row->irigasi_mm) > 0) {
-                $grouped[$lokasi][$monthKey]['count']++;
+                $grouped[$locationKey]['months'][$monthKey]['count']++;
             }
 
             if (strtolower((string) $row->status_harian) === 'bongkar') {
-                $grouped[$lokasi][$monthKey]['bongkar'] = true;
+                $grouped[$locationKey]['months'][$monthKey]['bongkar'] = true;
             }
         }
 
@@ -213,7 +232,7 @@ class WaterBalanceController extends Controller
 
         return response()->json([
             'months' => $monthsArray,
-            'report' => $grouped,
+            'report' => array_values($grouped),
         ]);
     }
 
