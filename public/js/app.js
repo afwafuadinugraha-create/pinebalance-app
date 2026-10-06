@@ -5,36 +5,11 @@ let monthlyZonePieChartInstance = null;
 let currentLocationRows = [];
 
 const monthlyZoneChartZones = [
-    { label: 'Critical (Wilting Point)', count: 'count_wp', percentage: 'percentage_wp', color: '#ef4444', side: '#991b1b' },
-    { label: 'Drying (Warning)', count: 'count_mad_wp', percentage: 'percentage_mad_wp', color: '#eab308', side: '#a16207' },
-    { label: 'Safe (Optimal)', count: 'count_fc_mad', percentage: 'percentage_fc_mad', color: '#3b82f6', side: '#1e40af' },
-    { label: 'Full (Field Capacity)', count: 'count_fc', percentage: 'percentage_fc', color: '#22c55e', side: '#166534' },
+    { label: 'Critical (Wilting Point)', count: 'count_wp', percentage: 'percentage_wp', className: 'zone-critical', color: '#ef4444' },
+    { label: 'Drying (Warning)', count: 'count_mad_wp', percentage: 'percentage_mad_wp', className: 'zone-drying', color: '#eab308' },
+    { label: 'Safe (Optimal)', count: 'count_fc_mad', percentage: 'percentage_fc_mad', className: 'zone-safe', color: '#3b82f6' },
+    { label: 'Full (Field Capacity)', count: 'count_fc', percentage: 'percentage_fc', className: 'zone-full', color: '#22c55e' },
 ];
-
-const monthlyZone3dPlugin = {
-    id: 'monthlyZone3d',
-    beforeDatasetsDraw(chart) {
-        const arcs = chart.getDatasetMeta(0)?.data || [];
-        if (arcs.length === 0) return;
-
-        const context = chart.ctx;
-        context.save();
-        for (let depth = 18; depth > 0; depth--) {
-            arcs.forEach((arc, index) => {
-                if (!arc || arc.hidden) return;
-
-                context.beginPath();
-                context.moveTo(arc.x, arc.y + depth);
-                context.arc(arc.x, arc.y + depth, arc.outerRadius, arc.startAngle, arc.endAngle);
-                context.lineTo(arc.x, arc.y + depth);
-                context.closePath();
-                context.fillStyle = monthlyZoneChartZones[index]?.side || '#475569';
-                context.fill();
-            });
-        }
-        context.restore();
-    },
-};
 
 function renderWilayahAlerts(pg = '') {
     const list = document.getElementById('wilayahAlertsList');
@@ -535,39 +510,75 @@ function renderPGSummaryTable(pg) {
 
 function renderMonthlyZoneSummary() {
     const tbody = document.getElementById('monthlyZoneSummaryBody');
-    if (!tbody) return;
+    const selection = document.getElementById('monthlyZonePgSelection');
+    if (!tbody || !selection) return;
 
     fetch('/api/monthly-zone-summary')
         .then(response => response.json())
         .then(result => {
             const rows = result.rows || [];
-            tbody.innerHTML = '';
-
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Belum ada data bulanan.</td></tr>';
-                renderMonthlyZonePieChart(null);
+                selection.innerHTML = '<option value="">Tidak ada data</option>';
+                renderMonthlyZoneView([], '');
                 return;
             }
 
-            rows.forEach(row => {
+            const previousSelection = selection.value;
+            const pgValues = [...new Set(rows.filter(row => !row.is_all_pg).map(row => String(row.pg)))];
+            selection.replaceChildren();
+
+            pgValues.forEach(pg => {
+                const option = document.createElement('option');
+                option.value = `pg:${pg}`;
+                option.textContent = formatMonthlyZonePg(pg);
+                selection.appendChild(option);
+            });
+
+            const allOption = document.createElement('option');
+            allOption.value = '__all__';
+            allOption.textContent = 'ALL PG';
+            selection.appendChild(allOption);
+
+            const hasPreviousSelection = [...selection.options].some(option => option.value === previousSelection);
+            selection.value = hasPreviousSelection ? previousSelection : (pgValues.length > 0 ? `pg:${pgValues[0]}` : '__all__');
+            selection.onchange = () => renderMonthlyZoneView(rows, selection.value);
+            renderMonthlyZoneView(rows, selection.value);
+        })
+        .catch(() => {
+            selection.innerHTML = '<option value="">Gagal memuat data</option>';
+            renderMonthlyZoneView([], '');
+        });
+}
+
+function renderMonthlyZoneView(rows, selectionValue) {
+    const tbody = document.getElementById('monthlyZoneSummaryBody');
+    const selectedLabel = document.getElementById('monthlyZoneSelectedPgLabel');
+    const selectedRows = selectionValue === '__all__'
+        ? rows.filter(row => row.is_all_pg)
+        : rows.filter(row => !row.is_all_pg && `pg:${row.pg}` === selectionValue);
+    const pgLabel = selectionValue === '__all__'
+        ? 'ALL PG'
+        : (selectedRows.length > 0 ? formatMonthlyZonePg(selectedRows[0].pg) : '');
+
+    if (selectedLabel) {
+        selectedLabel.textContent = pgLabel ? `${pgLabel} · ${selectedRows.length} bulan` : 'Data bulanan belum tersedia.';
+    }
+
+    if (tbody) {
+        tbody.replaceChildren();
+        if (selectedRows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Data bulanan belum tersedia untuk PG ini.</td></tr>';
+        } else {
+            selectedRows.forEach(row => {
                 const tr = document.createElement('tr');
-                if (row.is_all_pg) tr.classList.add('all-pg-row');
-
                 const monthCell = document.createElement('td');
-                monthCell.textContent = formatMonthName(row.month);
+                monthCell.textContent = formatMonthlyZoneMonth(row.month);
                 tr.appendChild(monthCell);
-
-                const pgCell = document.createElement('td');
-                pgCell.textContent = row.is_all_pg
-                    ? 'ALL PG'
-                    : `PG ${row.pg.toString().replace(/^pg\s*/i, '').trim()}`;
-                pgCell.style.fontWeight = '800';
-                tr.appendChild(pgCell);
 
                 monthlyZoneChartZones.forEach(zone => {
                     const percentage = Number(row[zone.percentage]) || 0;
                     const cell = document.createElement('td');
-                    cell.className = `zone-cell ${zone.label.startsWith('Critical') ? 'zone-critical' : zone.label.startsWith('Drying') ? 'zone-drying' : zone.label.startsWith('Safe') ? 'zone-safe' : 'zone-full'}`;
+                    cell.className = `zone-cell ${zone.className}`;
                     cell.style.textAlign = 'center';
 
                     const value = document.createElement('div');
@@ -601,35 +612,30 @@ function renderMonthlyZoneSummary() {
                 tr.appendChild(totalCell);
                 tbody.appendChild(tr);
             });
+        }
+    }
 
-            renderMonthlyZonePieSelector(rows);
-        })
-        .catch(() => {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Ringkasan bulanan gagal dimuat.</td></tr>';
-        });
+    renderMonthlyZonePieChart(selectedRows, pgLabel);
 }
 
-function renderMonthlyZonePieSelector(rows) {
-    const selection = document.getElementById('monthlyZoneChartSelection');
-    if (!selection) return;
+function formatMonthlyZonePg(pg) {
+    const cleanPg = String(pg).replace(/^pg\s*/i, '').trim();
+    const numericPg = Number(cleanPg);
 
-    selection.innerHTML = '';
-    rows.forEach((row, index) => {
-        const option = document.createElement('option');
-        option.value = index.toString();
-        const pgLabel = row.is_all_pg ? 'ALL PG' : `PG ${row.pg.toString().replace(/^pg\s*/i, '').trim()}`;
-        option.textContent = `${pgLabel} · ${formatMonthName(row.month)}`;
-        selection.appendChild(option);
-    });
-
-    selection.onchange = () => renderMonthlyZonePieChart(rows[Number(selection.value)]);
-    selection.selectedIndex = 0;
-    renderMonthlyZonePieChart(rows[0]);
+    return `PG ${cleanPg !== '' && Number.isFinite(numericPg) ? numericPg : cleanPg}`;
 }
 
-function renderMonthlyZonePieChart(row) {
+function formatMonthlyZoneMonth(yearMonth) {
+    const [year, month] = String(yearMonth).split('-');
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+    return `${monthNames[Number(month) - 1] || month} ${year}`;
+}
+
+function renderMonthlyZonePieChart(rows, pgLabel) {
     const canvas = document.getElementById('monthlyZonePieChart');
     const meta = document.getElementById('monthlyZoneChartMeta');
+    const legend = document.getElementById('monthlyZoneLegend');
     if (!canvas) return;
 
     if (monthlyZonePieChartInstance) {
@@ -637,14 +643,43 @@ function renderMonthlyZonePieChart(row) {
         monthlyZonePieChartInstance = null;
     }
 
-    if (!row) {
-        if (meta) meta.textContent = 'Belum ada data untuk ditampilkan.';
-        return;
+    const monthCount = new Set(rows.map(row => row.month)).size;
+    const totalDays = rows.reduce((sum, row) => sum + (Number(row.total_days) || 0), 0);
+    const zoneCounts = monthlyZoneChartZones.map(zone => rows.reduce((sum, row) => sum + (Number(row[zone.count]) || 0), 0));
+    const zonePercentages = zoneCounts.map(count => totalDays > 0 ? count / totalDays * 100 : 0);
+
+    if (meta) {
+        meta.textContent = pgLabel && rows.length > 0
+            ? `${pgLabel} · gabungan ${monthCount} bulan · ${totalDays.toLocaleString('id-ID')} catatan harian`
+            : 'Pilih PG untuk melihat komposisi semua bulan.';
     }
 
-    const pgLabel = row.is_all_pg ? 'ALL PG' : `PG ${row.pg.toString().replace(/^pg\s*/i, '').trim()}`;
-    if (meta) {
-        meta.textContent = `${pgLabel} · ${formatMonthName(row.month)} · ${Number(row.total_days).toLocaleString('id-ID')} catatan harian`;
+    if (legend) {
+        legend.replaceChildren();
+        monthlyZoneChartZones.forEach((zone, index) => {
+            const item = document.createElement('div');
+            item.className = 'monthly-zone-legend-item';
+
+            const swatch = document.createElement('span');
+            swatch.className = 'monthly-zone-legend-swatch';
+            swatch.style.backgroundColor = zone.color;
+            swatch.setAttribute('aria-hidden', 'true');
+
+            const name = document.createElement('span');
+            name.className = 'monthly-zone-legend-name';
+            name.textContent = zone.label;
+
+            const value = document.createElement('span');
+            value.className = 'monthly-zone-legend-value';
+            const count = document.createElement('strong');
+            count.textContent = `${zoneCounts[index].toLocaleString('id-ID')} catatan`;
+            const percentage = document.createElement('span');
+            percentage.textContent = `${zonePercentages[index].toFixed(1)}%`;
+            value.append(count, percentage);
+
+            item.append(swatch, name, value);
+            legend.appendChild(item);
+        });
     }
 
     monthlyZonePieChartInstance = new Chart(canvas.getContext('2d'), {
@@ -652,27 +687,23 @@ function renderMonthlyZonePieChart(row) {
         data: {
             labels: monthlyZoneChartZones.map(zone => zone.label),
             datasets: [{
-                data: monthlyZoneChartZones.map(zone => Number(row[zone.count]) || 0),
+                data: zoneCounts,
                 backgroundColor: monthlyZoneChartZones.map(zone => zone.color),
                 borderColor: '#ffffff',
                 borderWidth: 2,
                 hoverOffset: 8,
             }],
         },
-        plugins: [monthlyZone3dPlugin],
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 18, bottom: 18 } },
             plugins: {
-                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         label(context) {
                             const zone = monthlyZoneChartZones[context.dataIndex];
-                            const count = Number(row[zone.count]) || 0;
-                            const percentage = Number(row[zone.percentage]) || 0;
-                            return `${zone.label}: ${count.toLocaleString('id-ID')} catatan (${percentage.toFixed(1)}%)`;
+                            return `${zone.label}: ${zoneCounts[context.dataIndex].toLocaleString('id-ID')} catatan (${zonePercentages[context.dataIndex].toFixed(1)}%)`;
                         },
                     },
                 },

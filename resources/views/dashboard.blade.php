@@ -152,11 +152,23 @@
         .monthly-zone-table .zone-full .zone-value { color: #15803d; }
         .monthly-zone-table .zone-full .zone-fill { background: #22c55e; }
 
-        .monthly-zone-chart-controls { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
-        .monthly-zone-chart-controls label { display: grid; gap: 6px; color: #475569; font-size: 12px; font-weight: 700; }
-        .monthly-zone-chart-controls select { min-width: 240px; max-width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font: inherit; }
-        .monthly-zone-chart-wrap { width: min(100%, 640px); height: 370px; margin: 10px auto 0; position: relative; }
+        .monthly-zone-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .monthly-zone-controls label { color: #475569; font-size: 12px; font-weight: 700; }
+        .monthly-zone-controls select { min-width: 180px; max-width: 100%; margin-left: 8px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font: inherit; }
+        .monthly-zone-chart-layout { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(240px, 0.8fr); align-items: center; gap: 28px; max-width: 900px; margin: 0 auto; }
+        .monthly-zone-chart-wrap { width: 100%; height: 340px; position: relative; }
+        .monthly-zone-legend { display: grid; gap: 10px; }
+        .monthly-zone-legend-item { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+        .monthly-zone-legend-swatch { width: 12px; height: 12px; border-radius: 3px; }
+        .monthly-zone-legend-name { color: #334155; font-size: 12px; font-weight: 700; }
+        .monthly-zone-legend-value { color: #0f172a; font-size: 12px; text-align: right; white-space: nowrap; }
+        .monthly-zone-legend-value strong { display: block; font-size: 14px; }
         .monthly-zone-chart-meta { color: #64748b; font-size: 12px; }
+
+        @media (max-width: 700px) {
+            .monthly-zone-chart-layout { grid-template-columns: 1fr; gap: 12px; }
+            .monthly-zone-chart-wrap { height: 280px; }
+        }
 
         .pie-container-flex {
             display: flex;
@@ -695,18 +707,25 @@
         <!-- TAB 3: SUMMARY & ANALYTICS -->
         <div id="tab-summary" class="tab-page">
             <section class="card">
-                <div class="card-header">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                     <h3 style="color: #0f172a;"><i class="fa-solid fa-calendar-days" style="color: #0284c7;"></i> Monthly Water Zone Distribution</h3>
+                    <div class="monthly-zone-controls">
+                        <label for="monthlyZonePgSelection">Pilih PG
+                            <select id="monthlyZonePgSelection" aria-label="Pilih PG untuk ringkasan zona bulanan">
+                                <option value="">Memuat data...</option>
+                            </select>
+                        </label>
+                    </div>
                 </div>
                 <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
-                    Setiap zona menampilkan persentase dan jumlah catatan dari total catatan harian pada bulan tersebut. PG ditampilkan berurutan per bulan, lalu ALL PG.
+                    <strong id="monthlyZoneSelectedPgLabel">Pilih PG untuk melihat ringkasan bulanan.</strong>
+                    Setiap zona menampilkan persentase dan jumlah catatan harian pada bulan tersebut.
                 </p>
                 <div class="table-container">
                     <table class="monthly-zone-table">
                         <thead>
                             <tr>
                                 <th>Bulan</th>
-                                <th>PG</th>
                                 <th style="text-align: center; color: #b91c1c;">Critical · Wilting Point</th>
                                 <th style="text-align: center; color: #a16207;">Drying · Warning</th>
                                 <th style="text-align: center; color: #1d4ed8;">Safe · Optimal</th>
@@ -715,26 +734,22 @@
                             </tr>
                         </thead>
                         <tbody id="monthlyZoneSummaryBody">
-                            <tr><td colspan="7" style="text-align: center;">Loading monthly summary...</td></tr>
+                            <tr><td colspan="6" style="text-align: center;">Loading monthly summary...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
             <section class="card">
-                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                    <h3 style="color: #0f172a;"><i class="fa-solid fa-chart-pie" style="color: #0284c7;"></i> Komposisi Zona Bulanan</h3>
-                    <div class="monthly-zone-chart-controls">
-                        <label for="monthlyZoneChartSelection">PG · Bulan
-                            <select id="monthlyZoneChartSelection" aria-label="Pilih PG dan bulan untuk pie chart">
-                                <option value="">Memuat data...</option>
-                            </select>
-                        </label>
-                    </div>
+                <div class="card-header">
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-chart-pie" style="color: #0284c7;"></i> Komposisi Zona Seluruh Bulan</h3>
                 </div>
-                <p id="monthlyZoneChartMeta" class="monthly-zone-chart-meta">Pilih periode untuk melihat jumlah dan persentase tiap zona.</p>
-                <div class="monthly-zone-chart-wrap">
-                    <canvas id="monthlyZonePieChart" aria-label="Pie chart 3D komposisi zona air per bulan" role="img"></canvas>
+                <p id="monthlyZoneChartMeta" class="monthly-zone-chart-meta">Komposisi gabungan semua bulan untuk PG yang dipilih.</p>
+                <div class="monthly-zone-chart-layout">
+                    <div class="monthly-zone-chart-wrap">
+                        <canvas id="monthlyZonePieChart" aria-label="Pie chart 2D komposisi zona air semua bulan" role="img"></canvas>
+                    </div>
+                    <div id="monthlyZoneLegend" class="monthly-zone-legend" aria-live="polite"></div>
                 </div>
             </section>
 
