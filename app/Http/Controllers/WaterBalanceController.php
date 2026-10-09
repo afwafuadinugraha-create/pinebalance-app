@@ -107,13 +107,9 @@ class WaterBalanceController extends Controller
                 DB::raw("{$monthExpression} as month"),
                 DB::raw('COUNT(*) as total_days'),
                 DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as count_wp"),
-                DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN luas_siram_real_ha ELSE 0 END) as area_days_wp"),
                 DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
-                DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN luas_siram_real_ha ELSE 0 END) as area_days_mad_wp"),
                 DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN 1 ELSE 0 END) as count_fc_mad"),
-                DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN luas_siram_real_ha ELSE 0 END) as area_days_fc_mad"),
-                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc"),
-                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN luas_siram_real_ha ELSE 0 END) as area_days_fc")
+                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc")
             )
             ->groupBy('pg')
             ->groupByRaw($monthExpression)
@@ -133,10 +129,6 @@ class WaterBalanceController extends Controller
                     'count_mad_wp' => (int) $summary->count_mad_wp,
                     'count_fc_mad' => (int) $summary->count_fc_mad,
                     'count_fc' => (int) $summary->count_fc,
-                    'area_days_wp' => (float) $summary->area_days_wp,
-                    'area_days_mad_wp' => (float) $summary->area_days_mad_wp,
-                    'area_days_fc_mad' => (float) $summary->area_days_fc_mad,
-                    'area_days_fc' => (float) $summary->area_days_fc,
                 ];
 
                 $rows[] = $this->formatMonthlyZoneSummaryRow($month, $summary->pg, $counts, false);
@@ -158,10 +150,6 @@ class WaterBalanceController extends Controller
     private function formatMonthlyZoneSummaryRow(string $month, string $pg, array $counts, bool $isAllPg): array
     {
         $totalDays = $counts['total_days'];
-        $totalAreaDays = $counts['area_days_wp']
-            + $counts['area_days_mad_wp']
-            + $counts['area_days_fc_mad']
-            + $counts['area_days_fc'];
 
         return [
             'month' => $month,
@@ -172,11 +160,6 @@ class WaterBalanceController extends Controller
             'percentage_mad_wp' => $totalDays > 0 ? round($counts['count_mad_wp'] / $totalDays * 100, 1) : 0,
             'percentage_fc_mad' => $totalDays > 0 ? round($counts['count_fc_mad'] / $totalDays * 100, 1) : 0,
             'percentage_fc' => $totalDays > 0 ? round($counts['count_fc'] / $totalDays * 100, 1) : 0,
-            'total_area_days' => round($totalAreaDays, 2),
-            'percentage_area_wp' => $totalAreaDays > 0 ? round($counts['area_days_wp'] / $totalAreaDays * 100, 1) : 0,
-            'percentage_area_mad_wp' => $totalAreaDays > 0 ? round($counts['area_days_mad_wp'] / $totalAreaDays * 100, 1) : 0,
-            'percentage_area_fc_mad' => $totalAreaDays > 0 ? round($counts['area_days_fc_mad'] / $totalAreaDays * 100, 1) : 0,
-            'percentage_area_fc' => $totalAreaDays > 0 ? round($counts['area_days_fc'] / $totalAreaDays * 100, 1) : 0,
         ];
     }
 
