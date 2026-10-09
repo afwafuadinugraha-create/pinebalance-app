@@ -13,18 +13,19 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
     public function test_monthly_zone_percentages_include_weighted_all_pg_totals(): void
     {
         foreach ([
-            ['pg' => '01', 'tanggal' => '2026-08-01', 'zone' => 'At FC'],
-            ['pg' => '01', 'tanggal' => '2026-09-01', 'zone' => 'At WP'],
-            ['pg' => '01', 'tanggal' => '2026-09-02', 'zone' => 'FC - MAD 50%'],
-            ['pg' => '01', 'tanggal' => '2026-09-03', 'zone' => 'At FC'],
-            ['pg' => '02', 'tanggal' => '2026-08-01', 'zone' => 'MAD 50% - WP'],
-            ['pg' => '02', 'tanggal' => '2026-08-02', 'zone' => 'At WP'],
-            ['pg' => '02', 'tanggal' => '2026-09-01', 'zone' => 'At WP'],
+            ['pg' => '01', 'tanggal' => '2026-08-01', 'zone' => 'At FC', 'area' => 10],
+            ['pg' => '01', 'tanggal' => '2026-09-01', 'zone' => 'At WP', 'area' => 100],
+            ['pg' => '01', 'tanggal' => '2026-09-02', 'zone' => 'FC - MAD 50%', 'area' => 50],
+            ['pg' => '01', 'tanggal' => '2026-09-03', 'zone' => 'At FC', 'area' => 50],
+            ['pg' => '02', 'tanggal' => '2026-08-01', 'zone' => 'MAD 50% - WP', 'area' => 25],
+            ['pg' => '02', 'tanggal' => '2026-08-02', 'zone' => 'At WP', 'area' => 5],
+            ['pg' => '02', 'tanggal' => '2026-09-01', 'zone' => 'At WP', 'area' => 50],
         ] as $record) {
             DailyWaterBalance::create([
                 'pg' => $record['pg'],
                 'lokasi' => 'A',
                 'tanggal' => $record['tanggal'],
+                'luas_siram_real_ha' => $record['area'],
                 'water_balance_mm' => 50,
                 'status_zone' => $record['zone'],
             ]);
@@ -36,6 +37,8 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonCount(6, 'rows')
             ->assertJsonPath('rows.0.pg', '01')
             ->assertJsonPath('rows.0.month', '2026-08')
+            ->assertJsonPath('rows.0.total_area_days', 10)
+            ->assertJsonPath('rows.0.percentage_area_fc', 100)
             ->assertJsonPath('rows.1.pg', '01')
             ->assertJsonPath('rows.1.month', '2026-09')
             ->assertJsonPath('rows.2.pg', '02')
@@ -48,7 +51,14 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('rows.5.total_days', 4)
             ->assertJsonPath('rows.5.percentage_wp', 50)
             ->assertJsonPath('rows.5.percentage_fc', 25)
-            ->assertJsonPath('rows.5.percentage_fc_mad', 25);
+            ->assertJsonPath('rows.5.percentage_fc_mad', 25)
+            ->assertJsonPath('rows.5.total_area_days', 250)
+            ->assertJsonPath('rows.5.area_days_wp', 150)
+            ->assertJsonPath('rows.5.area_days_fc_mad', 50)
+            ->assertJsonPath('rows.5.area_days_fc', 50)
+            ->assertJsonPath('rows.5.percentage_area_wp', 60)
+            ->assertJsonPath('rows.5.percentage_area_fc_mad', 20)
+            ->assertJsonPath('rows.5.percentage_area_fc', 20);
     }
 
     public function test_all_pg_ranking_and_irrigation_keep_same_named_locations_separate(): void

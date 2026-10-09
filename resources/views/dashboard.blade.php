@@ -742,7 +742,7 @@
                 </div>
                 <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
                     <strong id="monthlyZoneSelectedPgLabel">Pilih PG untuk melihat ringkasan.</strong>
-                    Pilihan ini juga mengatur ranking lokasi, perbandingan status, dan frekuensi irigasi. Setiap zona menampilkan persentase dan jumlah catatan harian per bulan.
+                    Tiap zona menampilkan kontribusi luas siram aktual berbobot waktu (ha-hari), persentase kontribusinya, dan jumlah catatan. Contoh: 10 ha tercatat selama 3 hari = 30 ha-hari.
                 </p>
                 <div class="table-container">
                     <table class="monthly-zone-table">
@@ -765,9 +765,9 @@
 
             <section class="card">
                 <div class="card-header">
-                    <h3 style="color: #0f172a;"><i class="fa-solid fa-chart-pie" style="color: #0284c7;"></i> Komposisi Zona Seluruh Bulan</h3>
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-chart-pie" style="color: #0284c7;"></i> Komposisi Area per Zona Seluruh Bulan</h3>
                 </div>
-                <p id="monthlyZoneChartMeta" class="monthly-zone-chart-meta">Komposisi gabungan semua bulan untuk PG yang dipilih.</p>
+                <p id="monthlyZoneChartMeta" class="monthly-zone-chart-meta">Komposisi ha-hari berbasis luas siram aktual untuk PG yang dipilih.</p>
                 <div class="monthly-zone-chart-layout">
                     <div class="monthly-zone-chart-wrap">
                         <canvas id="monthlyZonePieChart" aria-label="Pie chart 2D komposisi zona air semua bulan" role="img"></canvas>
