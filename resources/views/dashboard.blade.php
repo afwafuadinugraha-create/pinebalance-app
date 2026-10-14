@@ -156,6 +156,9 @@
         .monthly-zone-table .zone-drilldown-button[aria-pressed="true"] { background: #eff6ff; }
         .monthly-zone-details-table { min-width: 760px; }
         .monthly-zone-details-table tbody tr:hover { background: #f8fafc; }
+        #tab-summary .table-container table th,
+        #tab-summary .table-container table td { text-align: center !important; }
+        .monthly-zone-meta-badge { color: #0284c7; font-size: 12px; font-weight: 700; }
 
         .monthly-zone-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .monthly-zone-controls label { color: #475569; font-size: 12px; font-weight: 700; }
@@ -725,18 +728,13 @@
                         </label>
                     </div>
                 </div>
-                <p style="font-size: 12px; color: #64748b; margin: -8px 0 0;">Pilihan ini mengatur ranking lokasi, perbandingan status air, frekuensi irigasi, dan distribusi zona bulanan. Terpisah dari filter utama Dashboard.</p>
             </section>
 
             <section class="card">
-                <div class="card-header">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                     <h3 style="color: #0f172a;"><i class="fa-solid fa-calendar-days" style="color: #0284c7;"></i> Monthly Water Zone Distribution</h3>
+                    <span id="monthlyZoneSelectedPgLabel" class="monthly-zone-meta-badge"></span>
                 </div>
-                <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
-                    <strong id="monthlyZoneSelectedPgLabel">Pilih PG untuk melihat ringkasan.</strong>
-                    Persentase zona dibobot dengan luas tanaman per lokasi. Nilai luas memakai luas siram rencana terbaru di bulan tersebut dan dihitung satu kali per lokasi.
-                    Klik zona untuk melihat catatan tanggal, lokasi, luas, dan status hariannya.
-                </p>
                 <div class="table-container">
                     <table class="monthly-zone-table">
                         <thead>
@@ -758,10 +756,10 @@
             </section>
 
             <section class="card" id="monthlyZoneDetailsCard">
-                <div class="card-header">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                     <h3 style="color: #0f172a;"><i class="fa-solid fa-table-list" style="color: #0284c7;"></i> Rincian Data Zona</h3>
+                    <span id="monthlyZoneDetailsMeta" class="monthly-zone-meta-badge"></span>
                 </div>
-                <p id="monthlyZoneDetailsMeta" class="monthly-zone-chart-meta">Klik persentase atau luas salah satu zona di tabel bulanan untuk melihat rinciannya. Nilai luas menggunakan luas siram rencana terbaru per lokasi pada bulan itu dan dapat berulang pada tanggal berbeda; jangan jumlahkan nilai luas dari baris harian.</p>
                 <div class="table-container">
                     <table class="monthly-zone-details-table">
                         <thead>
@@ -786,9 +784,6 @@
                     <h3 style="color: #0f172a;"><i class="fa-solid fa-ranking-star" style="color: #eab308;"></i> Location Water Health Ranking</h3>
                     <span id="summaryPgBadge" style="font-weight: 700; color: #0284c7; font-size: 13px;">-</span>
                 </div>
-                <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
-                    *Ranked by locations with the most <strong>Critical (At WP)</strong> days for irrigation prioritization.
-                </p>
                 <div class="table-container">
                     <table>
                         <thead>

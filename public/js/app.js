@@ -569,7 +569,7 @@ function renderMonthlyZoneView(rows, selectionValue) {
         : (selectedRows.length > 0 ? formatMonthlyZonePg(selectedRows[0].pg) : '');
 
     if (selectedLabel) {
-        selectedLabel.textContent = pgLabel ? `${pgLabel} · ${selectedRows.length} bulan` : 'Data bulanan belum tersedia.';
+        selectedLabel.textContent = pgLabel ? `${pgLabel} · ${selectedRows.length} bulan` : '';
     }
 
     if (tbody) {
@@ -665,7 +665,7 @@ function clearMonthlyZoneDetails() {
     monthlyZoneDetailsRequestId++;
     const meta = document.getElementById('monthlyZoneDetailsMeta');
     const tbody = document.getElementById('monthlyZoneDetailsBody');
-    if (meta) meta.textContent = 'Klik persentase atau luas salah satu zona di tabel bulanan untuk melihat rinciannya.';
+    if (meta) meta.textContent = '';
     if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Belum ada zona yang dipilih.</td></tr>';
 }
 
@@ -673,7 +673,7 @@ function loadMonthlyZoneDetails(month, zone, button) {
     const meta = document.getElementById('monthlyZoneDetailsMeta');
     const tbody = document.getElementById('monthlyZoneDetailsBody');
     const selection = document.getElementById('monthlyZonePgSelection');
-    if (!meta || !tbody || !selection) return;
+    if (!tbody || !selection) return;
 
     const requestId = ++monthlyZoneDetailsRequestId;
     const selectedPG = selection.value === '__all__' ? 'all' : selection.value.replace(/^pg:/, '');
@@ -682,7 +682,7 @@ function loadMonthlyZoneDetails(month, zone, button) {
     if (selectedStatus) params.set('status_harian', selectedStatus);
 
     const pgLabel = selectedPG === 'all' ? 'ALL PG' : formatMonthlyZonePg(selectedPG);
-    meta.textContent = `${pgLabel} · ${formatMonthlyZoneMonth(month)} · ${zone.label}`;
+    if (meta) meta.textContent = `${pgLabel} · ${formatMonthlyZoneMonth(month)} · ${zone.label}`;
     tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Memuat rincian data...</td></tr>';
 
     fetch(`/api/monthly-zone-details?${params}`)
@@ -698,7 +698,7 @@ function loadMonthlyZoneDetails(month, zone, button) {
             tbody.replaceChildren();
             if (rows.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Tidak ada catatan untuk zona dan filter yang dipilih.</td></tr>';
-                meta.textContent += ' · 0 catatan';
+                if (meta) meta.textContent += ' · 0 catatan';
 
                 return;
             }
@@ -722,7 +722,7 @@ function loadMonthlyZoneDetails(month, zone, button) {
                 tbody.appendChild(tr);
             });
 
-            meta.textContent += ` · ${rows.length.toLocaleString('id-ID')} catatan`;
+            if (meta) meta.textContent += ` · ${rows.length.toLocaleString('id-ID')} catatan`;
         })
         .catch(() => {
             if (requestId !== monthlyZoneDetailsRequestId || !button.isConnected) return;
