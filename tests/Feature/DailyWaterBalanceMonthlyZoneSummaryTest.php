@@ -130,4 +130,39 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertOk()
             ->assertJsonPath('report.0.months.2026-08.count', 1);
     }
+
+    public function test_monthly_zone_details_return_matching_records_with_latest_location_area(): void
+    {
+        foreach ([
+            ['pg' => '01', 'lokasi' => 'A', 'tanggal' => '2026-07-01', 'area' => 20, 'zone' => 'At WP', 'status' => 'P1'],
+            ['pg' => '01', 'lokasi' => 'A', 'tanggal' => '2026-07-02', 'area' => 15, 'zone' => 'At FC', 'status' => 'P2'],
+            ['pg' => '01', 'lokasi' => 'B', 'tanggal' => '2026-07-02', 'area' => 5, 'zone' => 'At WP', 'status' => 'P1'],
+            ['pg' => '02', 'lokasi' => 'A', 'tanggal' => '2026-07-01', 'area' => 30, 'zone' => 'At WP', 'status' => 'P1'],
+        ] as $record) {
+            DailyWaterBalance::create([
+                'pg' => $record['pg'],
+                'lokasi' => $record['lokasi'],
+                'tanggal' => $record['tanggal'],
+                'luas_siram_rencana_ha' => $record['area'],
+                'water_balance_mm' => 50,
+                'status_zone' => $record['zone'],
+                'status_harian' => $record['status'],
+            ]);
+        }
+
+        $this->getJson('/api/monthly-zone-details?month=2026-07&zone=At%20WP&pg=01')
+            ->assertOk()
+            ->assertJsonCount(2, 'rows')
+            ->assertJsonPath('rows.0.tanggal', '2026-07-01')
+            ->assertJsonPath('rows.0.lokasi', 'A')
+            ->assertJsonPath('rows.0.luas_tanaman_estimasi_ha', 15)
+            ->assertJsonPath('rows.0.status_harian', 'P1')
+            ->assertJsonPath('rows.1.pg', '01')
+            ->assertJsonPath('rows.1.lokasi', 'B')
+            ->assertJsonPath('rows.1.luas_tanaman_estimasi_ha', 5);
+
+        $this->getJson('/api/monthly-zone-details?month=2026-07&zone=At%20WP&pg=all&status_harian=P1')
+            ->assertOk()
+            ->assertJsonCount(3, 'rows');
+    }
 }

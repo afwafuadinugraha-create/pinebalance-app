@@ -1,14 +1,14 @@
 let waterBalanceChartInstance = null;
 let statusPieChartInstance = null;
 let compareBarChartInstance = null;
-let monthlyZonePieChartInstance = null;
 let currentLocationRows = [];
+let monthlyZoneDetailsRequestId = 0;
 
 const monthlyZoneChartZones = [
-    { label: 'Critical (Wilting Point)', count: 'count_wp', areaCount: 'area_wp', percentage: 'percentage_wp', areaPercentage: 'area_percentage_wp', className: 'zone-critical', color: '#ef4444' },
-    { label: 'Drying (Warning)', count: 'count_mad_wp', areaCount: 'area_mad_wp', percentage: 'percentage_mad_wp', areaPercentage: 'area_percentage_mad_wp', className: 'zone-drying', color: '#eab308' },
-    { label: 'Safe (Optimal)', count: 'count_fc_mad', areaCount: 'area_fc_mad', percentage: 'percentage_fc_mad', areaPercentage: 'area_percentage_fc_mad', className: 'zone-safe', color: '#3b82f6' },
-    { label: 'Full (Field Capacity)', count: 'count_fc', areaCount: 'area_fc', percentage: 'percentage_fc', areaPercentage: 'area_percentage_fc', className: 'zone-full', color: '#22c55e' },
+    { label: 'Critical (Wilting Point)', status: 'At WP', count: 'count_wp', areaCount: 'area_wp', percentage: 'percentage_wp', areaPercentage: 'area_percentage_wp', className: 'zone-critical', color: '#ef4444' },
+    { label: 'Drying (Warning)', status: 'MAD 50% - WP', count: 'count_mad_wp', areaCount: 'area_mad_wp', percentage: 'percentage_mad_wp', areaPercentage: 'area_percentage_mad_wp', className: 'zone-drying', color: '#eab308' },
+    { label: 'Safe (Optimal)', status: 'FC - MAD 50%', count: 'count_fc_mad', areaCount: 'area_fc_mad', percentage: 'percentage_fc_mad', areaPercentage: 'area_percentage_fc_mad', className: 'zone-safe', color: '#3b82f6' },
+    { label: 'Full (Field Capacity)', status: 'At FC', count: 'count_fc', areaCount: 'area_fc', percentage: 'percentage_fc', areaPercentage: 'area_percentage_fc', className: 'zone-full', color: '#22c55e' },
 ];
 
 function renderWilayahAlerts(pg = '') {
@@ -530,6 +530,7 @@ function renderMonthlyZoneSummary() {
             }
 
             selection.onchange = () => {
+                clearMonthlyZoneDetails();
                 renderMonthlyZoneView(rows, selection.value);
                 onAnalyticsPGChange();
             };
@@ -543,6 +544,7 @@ function renderMonthlyZoneSummary() {
 }
 
 function onAnalyticsStatusChange() {
+    clearMonthlyZoneDetails();
     renderMonthlyZoneSummary();
 }
 
@@ -608,7 +610,21 @@ function renderMonthlyZoneView(rows, selectionValue) {
                     fill.className = 'zone-fill';
                     fill.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
                     track.appendChild(fill);
-                    cell.append(value, count, track);
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'zone-drilldown-button';
+                    button.setAttribute('aria-label', `Lihat rincian ${zone.label}, ${formatMonthlyZoneMonth(row.month)}, ${percentage.toFixed(1)} persen`);
+                    button.setAttribute('aria-pressed', 'false');
+                    button.append(value, count, track);
+                    button.addEventListener('click', () => {
+                        document.querySelectorAll('.zone-drilldown-button[aria-pressed="true"]').forEach(activeButton => {
+                            activeButton.setAttribute('aria-pressed', 'false');
+                        });
+                        button.setAttribute('aria-pressed', 'true');
+                        loadMonthlyZoneDetails(row.month, zone, button);
+                    });
+                    cell.appendChild(button);
                     tr.appendChild(cell);
                 });
 
@@ -634,7 +650,6 @@ function renderMonthlyZoneView(rows, selectionValue) {
         }
     }
 
-    renderMonthlyZonePieChart(selectedRows, pgLabel);
 }
 
 function formatMonthlyZonePg(pg) {
@@ -651,84 +666,73 @@ function formatMonthlyZoneMonth(yearMonth) {
     return `${monthNames[Number(month) - 1] || month} ${year}`;
 }
 
-function renderMonthlyZonePieChart(rows, pgLabel) {
-    const canvas = document.getElementById('monthlyZonePieChart');
-    const meta = document.getElementById('monthlyZoneChartMeta');
-    const legend = document.getElementById('monthlyZoneLegend');
-    if (!canvas) return;
+function clearMonthlyZoneDetails() {
+    monthlyZoneDetailsRequestId++;
+    const meta = document.getElementById('monthlyZoneDetailsMeta');
+    const tbody = document.getElementById('monthlyZoneDetailsBody');
+    if (meta) meta.textContent = 'Klik persentase atau luas salah satu zona di tabel bulanan untuk melihat rinciannya.';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Belum ada zona yang dipilih.</td></tr>';
+}
 
-    if (monthlyZonePieChartInstance) {
-        monthlyZonePieChartInstance.destroy();
-        monthlyZonePieChartInstance = null;
-    }
+function loadMonthlyZoneDetails(month, zone, button) {
+    const meta = document.getElementById('monthlyZoneDetailsMeta');
+    const tbody = document.getElementById('monthlyZoneDetailsBody');
+    const selection = document.getElementById('monthlyZonePgSelection');
+    if (!meta || !tbody || !selection) return;
 
-    const monthCount = new Set(rows.map(row => row.month)).size;
-    const totalArea = rows.reduce((sum, row) => sum + (Number(row.total_area_ha) || 0), 0) / (monthCount || 1);
-    const zoneAreas = monthlyZoneChartZones.map(zone => rows.reduce((sum, row) => sum + (Number(row[zone.areaCount]) || 0), 0) / (monthCount || 1));
-    const zonePercentages = zoneAreas.map(area => totalArea > 0 ? area / totalArea * 100 : 0);
+    const requestId = ++monthlyZoneDetailsRequestId;
+    const selectedPG = selection.value === '__all__' ? 'all' : selection.value.replace(/^pg:/, '');
+    const selectedStatus = document.getElementById('monthlyZoneStatusSelection')?.value || '';
+    const params = new URLSearchParams({ month, zone: zone.status, pg: selectedPG });
+    if (selectedStatus) params.set('status_harian', selectedStatus);
 
-    if (meta) {
-        meta.textContent = pgLabel && rows.length > 0
-            ? `${pgLabel} · rata-rata ${monthCount} bulan · ${totalArea.toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha tanaman (estimasi)`
-            : 'Pilih PG untuk melihat komposisi semua bulan.';
-    }
+    const pgLabel = selectedPG === 'all' ? 'ALL PG' : formatMonthlyZonePg(selectedPG);
+    meta.textContent = `${pgLabel} · ${formatMonthlyZoneMonth(month)} · ${zone.label}`;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Memuat rincian data...</td></tr>';
 
-    if (legend) {
-        legend.replaceChildren();
-        monthlyZoneChartZones.forEach((zone, index) => {
-            const item = document.createElement('div');
-            item.className = 'monthly-zone-legend-item';
+    fetch(`/api/monthly-zone-details?${params}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Rincian data tidak dapat dimuat.');
 
-            const swatch = document.createElement('span');
-            swatch.className = 'monthly-zone-legend-swatch';
-            swatch.style.backgroundColor = zone.color;
-            swatch.setAttribute('aria-hidden', 'true');
+            return response.json();
+        })
+        .then(result => {
+            if (requestId !== monthlyZoneDetailsRequestId || !button.isConnected) return;
 
-            const name = document.createElement('span');
-            name.className = 'monthly-zone-legend-name';
-            name.textContent = zone.label;
+            const rows = Array.isArray(result.rows) ? result.rows : [];
+            tbody.replaceChildren();
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Tidak ada catatan untuk zona dan filter yang dipilih.</td></tr>';
+                meta.textContent += ' · 0 catatan';
 
-            const value = document.createElement('span');
-            value.className = 'monthly-zone-legend-value';
-            const count = document.createElement('strong');
-            count.textContent = `${zoneAreas[index].toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
-            const percentage = document.createElement('span');
-            percentage.textContent = `${zonePercentages[index].toFixed(1)}%`;
-            value.append(count, percentage);
+                return;
+            }
 
-            item.append(swatch, name, value);
-            legend.appendChild(item);
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                const dateCell = document.createElement('td');
+                dateCell.textContent = formatDateCustom(row.tanggal);
+                const pgCell = document.createElement('td');
+                pgCell.textContent = formatMonthlyZonePg(row.pg);
+                const locationCell = document.createElement('td');
+                locationCell.textContent = row.lokasi || '-';
+                const areaCell = document.createElement('td');
+                areaCell.textContent = `${Number(row.luas_tanaman_estimasi_ha || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
+                areaCell.style.textAlign = 'right';
+                const zoneCell = document.createElement('td');
+                zoneCell.textContent = row.status_zone || '-';
+                const dailyStatusCell = document.createElement('td');
+                dailyStatusCell.textContent = row.status_harian || '-';
+                tr.append(dateCell, pgCell, locationCell, areaCell, zoneCell, dailyStatusCell);
+                tbody.appendChild(tr);
+            });
+
+            meta.textContent += ` · ${rows.length.toLocaleString('id-ID')} catatan`;
+        })
+        .catch(() => {
+            if (requestId !== monthlyZoneDetailsRequestId || !button.isConnected) return;
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #b91c1c;">Rincian gagal dimuat. Coba pilih zona lagi.</td></tr>';
         });
-    }
-
-    monthlyZonePieChartInstance = new Chart(canvas.getContext('2d'), {
-        type: 'pie',
-        data: {
-            labels: monthlyZoneChartZones.map(zone => zone.label),
-            datasets: [{
-                data: zoneAreas,
-                backgroundColor: monthlyZoneChartZones.map(zone => zone.color),
-                borderColor: '#ffffff',
-                borderWidth: 2,
-                hoverOffset: 8,
-            }],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label(context) {
-                            const zone = monthlyZoneChartZones[context.dataIndex];
-                            return `${zone.label}: ${zoneAreas[context.dataIndex].toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha (${zonePercentages[context.dataIndex].toFixed(1)}%)`;
-                        },
-                    },
-                },
-            },
-        },
-    });
 }
 
 function renderCompareBarChart(summaryList, cleanPG, isAllPG = false) {

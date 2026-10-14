@@ -215,6 +215,58 @@ class WaterBalanceController extends Controller
         return response()->json(['rows' => $rows]);
     }
 
+    public function getMonthlyZoneDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'month' => ['required', 'date_format:Y-m'],
+            'zone' => ['required', 'in:At WP,MAD 50% - WP,FC - MAD 50%,At FC'],
+            'pg' => ['nullable', 'string'],
+            'status_harian' => ['nullable', 'string'],
+        ]);
+
+        $monthExpression = match (DB::connection()->getDriverName()) {
+            'pgsql' => "TO_CHAR(tanggal, 'YYYY-MM')",
+            'mysql', 'mariadb' => "DATE_FORMAT(tanggal, '%Y-%m')",
+            default => "strftime('%Y-%m', tanggal)",
+        };
+
+        $query = DailyWaterBalance::query()
+            ->select('pg', 'lokasi', 'tanggal', 'luas_siram_rencana_ha', 'status_zone', 'status_harian')
+            ->whereRaw("{$monthExpression} = ?", [$validated['month']])
+            ->orderBy('tanggal');
+
+        if (! empty($validated['pg']) && strtolower($validated['pg']) !== 'all') {
+            $query->where('pg', $validated['pg']);
+        }
+
+        if (! empty($validated['status_harian'])) {
+            $query->where('status_harian', $validated['status_harian']);
+        }
+
+        $records = $query->get();
+        $latestAreaByLocation = [];
+
+        foreach ($records as $record) {
+            $latestAreaByLocation[$record->pg.'|'.$record->lokasi] = (float) $record->luas_siram_rencana_ha;
+        }
+
+        $rows = $records
+            ->where('status_zone', $validated['zone'])
+            ->map(function ($record) use ($latestAreaByLocation) {
+                return [
+                    'tanggal' => $record->tanggal,
+                    'pg' => $record->pg,
+                    'lokasi' => $record->lokasi,
+                    'luas_tanaman_estimasi_ha' => $latestAreaByLocation[$record->pg.'|'.$record->lokasi] ?? 0,
+                    'status_zone' => $record->status_zone,
+                    'status_harian' => $record->status_harian,
+                ];
+            })
+            ->values();
+
+        return response()->json(['rows' => $rows]);
+    }
+
     private function formatMonthlyZoneSummaryRow(string $month, string $pg, array $counts, bool $isAllPg): array
     {
         $totalDays = $counts['total_days'];

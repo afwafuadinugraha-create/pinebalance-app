@@ -7,6 +7,7 @@ Route::get('/api/lokasi', [WaterBalanceController::class, 'getLokasiByPG']);
 Route::get('/api/water-balance-data', [WaterBalanceController::class, 'getDataByLokasi']);
 Route::get('/api/pg-summary', [WaterBalanceController::class, 'getSummaryByPG']);
 Route::get('/api/monthly-zone-summary', [WaterBalanceController::class, 'getMonthlyZoneSummary']);
+Route::get('/api/monthly-zone-details', [WaterBalanceController::class, 'getMonthlyZoneDetails']);
 Route::get('/api/wilayah-alerts', [WaterBalanceController::class, 'getWilayahAlerts']);
 Route::get('/api/pg-irrigation-monthly', [WaterBalanceController::class, 'getMonthlyIrrigationByPG']);
 Route::get('/api/water-balance/template', [WaterBalanceController::class, 'downloadTemplate']);

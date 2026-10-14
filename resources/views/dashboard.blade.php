@@ -151,24 +151,16 @@
         .monthly-zone-table .zone-safe .zone-fill { background: #3b82f6; }
         .monthly-zone-table .zone-full .zone-value { color: #15803d; }
         .monthly-zone-table .zone-full .zone-fill { background: #22c55e; }
+        .monthly-zone-table .zone-drilldown-button { display: block; width: 100%; padding: 8px 6px; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+        .monthly-zone-table .zone-drilldown-button:hover, .monthly-zone-table .zone-drilldown-button:focus-visible { background: #f1f5f9; outline: 2px solid #94a3b8; outline-offset: 1px; }
+        .monthly-zone-table .zone-drilldown-button[aria-pressed="true"] { background: #eff6ff; }
+        .monthly-zone-details-table { min-width: 760px; }
+        .monthly-zone-details-table tbody tr:hover { background: #f8fafc; }
 
         .monthly-zone-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .monthly-zone-controls label { color: #475569; font-size: 12px; font-weight: 700; }
         .monthly-zone-controls select { min-width: 180px; max-width: 100%; margin-left: 8px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #0f172a; font: inherit; }
-        .monthly-zone-chart-layout { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(240px, 0.8fr); align-items: center; gap: 28px; max-width: 900px; margin: 0 auto; }
-        .monthly-zone-chart-wrap { width: 100%; height: 340px; position: relative; }
-        .monthly-zone-legend { display: grid; gap: 10px; }
-        .monthly-zone-legend-item { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
-        .monthly-zone-legend-swatch { width: 12px; height: 12px; border-radius: 3px; }
-        .monthly-zone-legend-name { color: #334155; font-size: 12px; font-weight: 700; }
-        .monthly-zone-legend-value { color: #0f172a; font-size: 12px; text-align: right; white-space: nowrap; }
-        .monthly-zone-legend-value strong { display: block; font-size: 14px; }
         .monthly-zone-chart-meta { color: #64748b; font-size: 12px; }
-
-        @media (max-width: 700px) {
-            .monthly-zone-chart-layout { grid-template-columns: 1fr; gap: 12px; }
-            .monthly-zone-chart-wrap { height: 280px; }
-        }
 
         .pie-container-flex {
             display: flex;
@@ -743,7 +735,7 @@
                 <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
                     <strong id="monthlyZoneSelectedPgLabel">Pilih PG untuk melihat ringkasan.</strong>
                     Persentase zona dibobot dengan estimasi luas tanaman per lokasi. Estimasi memakai luas siram rencana terbaru di bulan tersebut, dihitung satu kali per lokasi.
-                    Kolom terakhir mengalikan total luas tanaman estimasi dengan jumlah lokasi.
+                    Kolom terakhir mengalikan total luas tanaman estimasi dengan jumlah lokasi. Klik zona untuk melihat catatan tanggal, lokasi, luas, dan status hariannya.
                 </p>
                 <div class="table-container">
                     <table class="monthly-zone-table">
@@ -766,16 +758,27 @@
                 </div>
             </section>
 
-            <section class="card">
+            <section class="card" id="monthlyZoneDetailsCard">
                 <div class="card-header">
-                    <h3 style="color: #0f172a;"><i class="fa-solid fa-chart-pie" style="color: #0284c7;"></i> Komposisi Zona Seluruh Bulan</h3>
+                    <h3 style="color: #0f172a;"><i class="fa-solid fa-table-list" style="color: #0284c7;"></i> Rincian Data Zona</h3>
                 </div>
-                <p id="monthlyZoneChartMeta" class="monthly-zone-chart-meta">Komposisi gabungan semua bulan untuk PG yang dipilih.</p>
-                <div class="monthly-zone-chart-layout">
-                    <div class="monthly-zone-chart-wrap">
-                        <canvas id="monthlyZonePieChart" aria-label="Pie chart 2D komposisi zona air semua bulan" role="img"></canvas>
-                    </div>
-                    <div id="monthlyZoneLegend" class="monthly-zone-legend" aria-live="polite"></div>
+                <p id="monthlyZoneDetailsMeta" class="monthly-zone-chart-meta">Klik persentase atau luas salah satu zona di tabel bulanan untuk melihat rinciannya. Luas tanaman adalah estimasi terbaru per lokasi pada bulan itu dan dapat berulang pada tanggal berbeda; jangan jumlahkan nilai luas dari baris harian.</p>
+                <div class="table-container">
+                    <table class="monthly-zone-details-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>PG</th>
+                                <th>Lokasi</th>
+                                <th style="text-align: center;">Luas tanaman estimasi lokasi</th>
+                                <th>Status air</th>
+                                <th>Status harian</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthlyZoneDetailsBody">
+                            <tr><td colspan="6" style="text-align: center;">Belum ada zona yang dipilih.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
