@@ -46,7 +46,6 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('rows.4.total_days', 3)
             ->assertJsonPath('rows.4.total_area_ha', 13)
             ->assertJsonPath('rows.4.location_count', 2)
-            ->assertJsonPath('rows.4.area_location_product', 26)
             ->assertJsonPath('rows.5.pg', 'ALL PG')
             ->assertJsonPath('rows.5.month', '2026-09')
             ->assertJsonPath('rows.5.total_days', 4)
@@ -55,7 +54,6 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('rows.5.percentage_fc_mad', 25)
             ->assertJsonPath('rows.5.total_area_ha', 17)
             ->assertJsonPath('rows.5.location_count', 2)
-            ->assertJsonPath('rows.5.area_location_product', 34)
             ->assertJsonPath('rows.5.area_wp', 9)
             ->assertJsonPath('rows.5.area_percentage_wp', 52.9)
             ->assertJsonPath('rows.5.area_fc', 4)
@@ -155,11 +153,11 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonCount(2, 'rows')
             ->assertJsonPath('rows.0.tanggal', '2026-07-01')
             ->assertJsonPath('rows.0.lokasi', 'A')
-            ->assertJsonPath('rows.0.luas_tanaman_estimasi_ha', 15)
+            ->assertJsonPath('rows.0.luas_tanaman_ha', 15)
             ->assertJsonPath('rows.0.status_harian', 'P1')
             ->assertJsonPath('rows.1.pg', '01')
             ->assertJsonPath('rows.1.lokasi', 'B')
-            ->assertJsonPath('rows.1.luas_tanaman_estimasi_ha', 5);
+            ->assertJsonPath('rows.1.luas_tanaman_ha', 5);
 
         $this->getJson('/api/monthly-zone-details?month=2026-07&zone=At%20WP&pg=all&status_harian=P1')
             ->assertOk()

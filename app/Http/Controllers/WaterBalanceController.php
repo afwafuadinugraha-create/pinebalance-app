@@ -257,7 +257,7 @@ class WaterBalanceController extends Controller
                     'tanggal' => $record->tanggal,
                     'pg' => $record->pg,
                     'lokasi' => $record->lokasi,
-                    'luas_tanaman_estimasi_ha' => $latestAreaByLocation[$record->pg.'|'.$record->lokasi] ?? 0,
+                    'luas_tanaman_ha' => $latestAreaByLocation[$record->pg.'|'.$record->lokasi] ?? 0,
                     'status_zone' => $record->status_zone,
                     'status_harian' => $record->status_harian,
                 ];
@@ -277,7 +277,6 @@ class WaterBalanceController extends Controller
             'pg' => $pg,
             'is_all_pg' => $isAllPg,
             ...$counts,
-            'area_location_product' => $totalArea * ($counts['location_count'] ?? 0),
             'percentage_wp' => $totalDays > 0 ? round($counts['count_wp'] / $totalDays * 100, 1) : 0,
             'percentage_mad_wp' => $totalDays > 0 ? round($counts['count_mad_wp'] / $totalDays * 100, 1) : 0,
             'percentage_fc_mad' => $totalDays > 0 ? round($counts['count_fc_mad'] / $totalDays * 100, 1) : 0,

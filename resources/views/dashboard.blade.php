@@ -734,8 +734,8 @@
                 </div>
                 <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
                     <strong id="monthlyZoneSelectedPgLabel">Pilih PG untuk melihat ringkasan.</strong>
-                    Persentase zona dibobot dengan estimasi luas tanaman per lokasi. Estimasi memakai luas siram rencana terbaru di bulan tersebut, dihitung satu kali per lokasi.
-                    Kolom terakhir mengalikan total luas tanaman estimasi dengan jumlah lokasi. Klik zona untuk melihat catatan tanggal, lokasi, luas, dan status hariannya.
+                    Persentase zona dibobot dengan luas tanaman per lokasi. Nilai luas memakai luas siram rencana terbaru di bulan tersebut dan dihitung satu kali per lokasi.
+                    Klik zona untuk melihat catatan tanggal, lokasi, luas, dan status hariannya.
                 </p>
                 <div class="table-container">
                     <table class="monthly-zone-table">
@@ -746,13 +746,12 @@
                                 <th style="text-align: center; color: #a16207;">Drying · Warning</th>
                                 <th style="text-align: center; color: #1d4ed8;">Safe · Optimal</th>
                                 <th style="text-align: center; color: #15803d;">Full · Field Capacity</th>
-                                <th style="text-align: center;">Luas tanaman (estimasi)</th>
+                                <th style="text-align: center;">Luas tanaman</th>
                                 <th style="text-align: center;">Jumlah lokasi</th>
-                                <th style="text-align: center;">Luas × lokasi</th>
                             </tr>
                         </thead>
                         <tbody id="monthlyZoneSummaryBody">
-                            <tr><td colspan="8" style="text-align: center;">Loading monthly summary...</td></tr>
+                            <tr><td colspan="7" style="text-align: center;">Loading monthly summary...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -762,7 +761,7 @@
                 <div class="card-header">
                     <h3 style="color: #0f172a;"><i class="fa-solid fa-table-list" style="color: #0284c7;"></i> Rincian Data Zona</h3>
                 </div>
-                <p id="monthlyZoneDetailsMeta" class="monthly-zone-chart-meta">Klik persentase atau luas salah satu zona di tabel bulanan untuk melihat rinciannya. Luas tanaman adalah estimasi terbaru per lokasi pada bulan itu dan dapat berulang pada tanggal berbeda; jangan jumlahkan nilai luas dari baris harian.</p>
+                <p id="monthlyZoneDetailsMeta" class="monthly-zone-chart-meta">Klik persentase atau luas salah satu zona di tabel bulanan untuk melihat rinciannya. Nilai luas menggunakan luas siram rencana terbaru per lokasi pada bulan itu dan dapat berulang pada tanggal berbeda; jangan jumlahkan nilai luas dari baris harian.</p>
                 <div class="table-container">
                     <table class="monthly-zone-details-table">
                         <thead>
@@ -770,7 +769,7 @@
                                 <th>Tanggal</th>
                                 <th>PG</th>
                                 <th>Lokasi</th>
-                                <th style="text-align: center;">Luas tanaman estimasi lokasi</th>
+                                <th style="text-align: center;">Luas tanaman</th>
                                 <th>Status air</th>
                                 <th>Status harian</th>
                             </tr>

@@ -575,7 +575,7 @@ function renderMonthlyZoneView(rows, selectionValue) {
     if (tbody) {
         tbody.replaceChildren();
         if (selectedRows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Data bulanan belum tersedia untuk PG ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Data bulanan belum tersedia untuk PG ini.</td></tr>';
         } else {
             selectedRows.forEach(row => {
                 const tr = document.createElement('tr');
@@ -640,11 +640,6 @@ function renderMonthlyZoneView(rows, selectionValue) {
                 locationCountCell.style.fontWeight = '800';
                 tr.appendChild(locationCountCell);
 
-                const areaLocationProductCell = document.createElement('td');
-                areaLocationProductCell.textContent = `${Number(row.area_location_product || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha-lokasi`;
-                areaLocationProductCell.style.textAlign = 'center';
-                areaLocationProductCell.style.fontWeight = '800';
-                tr.appendChild(areaLocationProductCell);
                 tbody.appendChild(tr);
             });
         }
@@ -717,8 +712,8 @@ function loadMonthlyZoneDetails(month, zone, button) {
                 const locationCell = document.createElement('td');
                 locationCell.textContent = row.lokasi || '-';
                 const areaCell = document.createElement('td');
-                areaCell.textContent = `${Number(row.luas_tanaman_estimasi_ha || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
-                areaCell.style.textAlign = 'right';
+                areaCell.textContent = `${Number(row.luas_tanaman_ha || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
+                areaCell.style.textAlign = 'center';
                 const zoneCell = document.createElement('td');
                 zoneCell.textContent = row.status_zone || '-';
                 const dailyStatusCell = document.createElement('td');
