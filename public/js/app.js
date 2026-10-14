@@ -573,7 +573,7 @@ function renderMonthlyZoneView(rows, selectionValue) {
     if (tbody) {
         tbody.replaceChildren();
         if (selectedRows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Data bulanan belum tersedia untuk PG ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Data bulanan belum tersedia untuk PG ini.</td></tr>';
         } else {
             selectedRows.forEach(row => {
                 const tr = document.createElement('tr');
@@ -612,14 +612,23 @@ function renderMonthlyZoneView(rows, selectionValue) {
                     tr.appendChild(cell);
                 });
 
-                const totalCell = document.createElement('td');
-                totalCell.style.textAlign = 'center';
-                totalCell.style.fontWeight = '800';
-                totalCell.innerHTML = `
-                    <div>${Number(row.total_area_ha || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha</div>
-                    <div style="font-size: 11px; color: #64748b; font-weight: 600; margin-top: 3px;">${Number(row.location_count || 0).toLocaleString('id-ID')} lokasi</div>
-                `;
-                tr.appendChild(totalCell);
+                const areaCell = document.createElement('td');
+                areaCell.textContent = `${Number(row.total_area_ha || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
+                areaCell.style.textAlign = 'center';
+                areaCell.style.fontWeight = '800';
+                tr.appendChild(areaCell);
+
+                const locationCountCell = document.createElement('td');
+                locationCountCell.textContent = Number(row.location_count || 0).toLocaleString('id-ID');
+                locationCountCell.style.textAlign = 'center';
+                locationCountCell.style.fontWeight = '800';
+                tr.appendChild(locationCountCell);
+
+                const areaLocationProductCell = document.createElement('td');
+                areaLocationProductCell.textContent = `${Number(row.area_location_product || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha-lokasi`;
+                areaLocationProductCell.style.textAlign = 'center';
+                areaLocationProductCell.style.fontWeight = '800';
+                tr.appendChild(areaLocationProductCell);
                 tbody.appendChild(tr);
             });
         }
@@ -654,13 +663,13 @@ function renderMonthlyZonePieChart(rows, pgLabel) {
     }
 
     const monthCount = new Set(rows.map(row => row.month)).size;
-    const totalArea = rows.reduce((sum, row) => sum + (Number(row.total_area_ha) || 0), 0);
-    const zoneAreas = monthlyZoneChartZones.map(zone => rows.reduce((sum, row) => sum + (Number(row[zone.areaCount]) || 0), 0));
+    const totalArea = rows.reduce((sum, row) => sum + (Number(row.total_area_ha) || 0), 0) / (monthCount || 1);
+    const zoneAreas = monthlyZoneChartZones.map(zone => rows.reduce((sum, row) => sum + (Number(row[zone.areaCount]) || 0), 0) / (monthCount || 1));
     const zonePercentages = zoneAreas.map(area => totalArea > 0 ? area / totalArea * 100 : 0);
 
     if (meta) {
         meta.textContent = pgLabel && rows.length > 0
-            ? `${pgLabel} · gabungan ${monthCount} bulan · ${totalArea.toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha area aktif tanaman`
+            ? `${pgLabel} · rata-rata ${monthCount} bulan · ${totalArea.toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha tanaman (estimasi)`
             : 'Pilih PG untuk melihat komposisi semua bulan.';
     }
 

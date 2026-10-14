@@ -134,7 +134,7 @@
 
         .full-width-card { width: 100%; }
 
-        .monthly-zone-table { min-width: 1040px; }
+        .monthly-zone-table { min-width: 1320px; }
         .monthly-zone-table tbody tr:hover { background: #f8fafc; }
         .monthly-zone-table tr.all-pg-row { background: #f0fdf4; }
         .monthly-zone-table tr.all-pg-row:hover { background: #dcfce7; }
@@ -742,7 +742,8 @@
                 </div>
                 <p style="font-size: 12px; color: #64748b; margin-top: -8px; margin-bottom: 14px;">
                     <strong id="monthlyZoneSelectedPgLabel">Pilih PG untuk melihat ringkasan.</strong>
-                    Pilihan ini juga mengatur ranking lokasi, perbandingan status, dan frekuensi irigasi. Setiap zona menampilkan persentase dan jumlah catatan harian per bulan.
+                    Persentase zona dibobot dengan estimasi luas tanaman per lokasi. Estimasi memakai luas siram rencana terbaru di bulan tersebut, dihitung satu kali per lokasi.
+                    Kolom terakhir mengalikan total luas tanaman estimasi dengan jumlah lokasi.
                 </p>
                 <div class="table-container">
                     <table class="monthly-zone-table">
@@ -753,11 +754,13 @@
                                 <th style="text-align: center; color: #a16207;">Drying · Warning</th>
                                 <th style="text-align: center; color: #1d4ed8;">Safe · Optimal</th>
                                 <th style="text-align: center; color: #15803d;">Full · Field Capacity</th>
-                                <th style="text-align: center;">Luas area aktif</th>
+                                <th style="text-align: center;">Luas tanaman (estimasi)</th>
+                                <th style="text-align: center;">Jumlah lokasi</th>
+                                <th style="text-align: center;">Luas × lokasi</th>
                             </tr>
                         </thead>
                         <tbody id="monthlyZoneSummaryBody">
-                            <tr><td colspan="6" style="text-align: center;">Loading monthly summary...</td></tr>
+                            <tr><td colspan="8" style="text-align: center;">Loading monthly summary...</td></tr>
                         </tbody>
                     </table>
                 </div>

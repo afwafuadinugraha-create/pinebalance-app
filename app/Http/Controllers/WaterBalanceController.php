@@ -103,49 +103,103 @@ class WaterBalanceController extends Controller
             $query->where('status_harian', $request->query('status_harian'));
         }
 
-        $monthlySummary = $query
+        $latestAreaDates = (clone $query)
             ->select(
                 'pg',
+                'lokasi',
+                DB::raw("{$monthExpression} as month"),
+                DB::raw('MAX(tanggal) as latest_date')
+            )
+            ->groupBy('pg', 'lokasi')
+            ->groupByRaw($monthExpression);
+        $latestMonthExpression = str_replace('tanggal', 'balances.tanggal', $monthExpression);
+
+        $latestAreas = DB::table('daily_water_balances as balances')
+            ->joinSub($latestAreaDates, 'latest', function ($join) use ($latestMonthExpression) {
+                $join->on('balances.pg', '=', 'latest.pg')
+                    ->on('balances.lokasi', '=', 'latest.lokasi')
+                    ->on('balances.tanggal', '=', 'latest.latest_date')
+                    ->whereRaw("{$latestMonthExpression} = latest.month");
+            })
+            ->select('balances.pg', 'balances.lokasi', 'latest.month', 'balances.luas_siram_rencana_ha as area_ha')
+            ->get()
+            ->groupBy(['pg', 'month']);
+
+        $locationSummaries = $query
+            ->select(
+                'pg',
+                'lokasi',
                 DB::raw("{$monthExpression} as month"),
                 DB::raw('COUNT(*) as total_days'),
-                DB::raw('COUNT(DISTINCT lokasi) as location_count'),
-                DB::raw('SUM(COALESCE(luas_siram_real_ha, 0)) as total_area_ha'),
                 DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as count_wp"),
                 DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
                 DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN 1 ELSE 0 END) as count_fc_mad"),
-                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc"),
-                DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN COALESCE(luas_siram_real_ha, 0) ELSE 0 END) as area_wp"),
-                DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN COALESCE(luas_siram_real_ha, 0) ELSE 0 END) as area_mad_wp"),
-                DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN COALESCE(luas_siram_real_ha, 0) ELSE 0 END) as area_fc_mad"),
-                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN COALESCE(luas_siram_real_ha, 0) ELSE 0 END) as area_fc")
+                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc")
             )
-            ->groupBy('pg')
+            ->groupBy('pg', 'lokasi')
             ->groupByRaw($monthExpression)
             ->orderBy('pg')
             ->orderBy('month')
+            ->orderBy('lokasi')
             ->get();
+
+        $monthlySummary = [];
+
+        foreach ($locationSummaries as $locationSummary) {
+            $month = $locationSummary->month;
+            $pg = $locationSummary->pg;
+            $areaRows = $latestAreas->get($pg, collect())->get($month, collect());
+            $latestArea = (float) ($areaRows->firstWhere('lokasi', $locationSummary->lokasi)->area_ha ?? 0);
+            $totalDays = (int) $locationSummary->total_days;
+            $key = $pg.'|'.$month;
+
+            if (! isset($monthlySummary[$key])) {
+                $monthlySummary[$key] = [
+                    'pg' => $pg,
+                    'month' => $month,
+                    'total_days' => 0,
+                    'location_count' => 0,
+                    'total_area_ha' => 0.0,
+                    'count_wp' => 0,
+                    'count_mad_wp' => 0,
+                    'count_fc_mad' => 0,
+                    'count_fc' => 0,
+                    'area_wp' => 0.0,
+                    'area_mad_wp' => 0.0,
+                    'area_fc_mad' => 0.0,
+                    'area_fc' => 0.0,
+                ];
+            }
+
+            $monthlySummary[$key]['total_days'] += $totalDays;
+            $monthlySummary[$key]['location_count']++;
+            $monthlySummary[$key]['total_area_ha'] += $latestArea;
+
+            foreach ([
+                'wp' => 'count_wp',
+                'mad_wp' => 'count_mad_wp',
+                'fc_mad' => 'count_fc_mad',
+                'fc' => 'count_fc',
+            ] as $areaKey => $countKey) {
+                $zoneDays = (int) $locationSummary->{$countKey};
+                $monthlySummary[$key][$countKey] += $zoneDays;
+                $monthlySummary[$key]['area_'.$areaKey] += $totalDays > 0 ? $latestArea * $zoneDays / $totalDays : 0;
+            }
+        }
 
         $rows = [];
         $allPgByMonth = [];
+        $groupedMonthlySummary = collect($monthlySummary)
+            ->groupBy('pg')
+            ->sortKeys(SORT_NATURAL | SORT_FLAG_CASE);
 
-        foreach ($monthlySummary->groupBy('pg')->sortKeys(SORT_NATURAL | SORT_FLAG_CASE) as $pgSummaries) {
+        foreach ($groupedMonthlySummary as $pgSummaries) {
             foreach ($pgSummaries->sortBy('month') as $summary) {
-                $month = $summary->month;
-                $counts = [
-                    'total_days' => (int) $summary->total_days,
-                    'location_count' => (int) $summary->location_count,
-                    'total_area_ha' => (float) $summary->total_area_ha,
-                    'count_wp' => (int) $summary->count_wp,
-                    'count_mad_wp' => (int) $summary->count_mad_wp,
-                    'count_fc_mad' => (int) $summary->count_fc_mad,
-                    'count_fc' => (int) $summary->count_fc,
-                    'area_wp' => (float) $summary->area_wp,
-                    'area_mad_wp' => (float) $summary->area_mad_wp,
-                    'area_fc_mad' => (float) $summary->area_fc_mad,
-                    'area_fc' => (float) $summary->area_fc,
-                ];
+                $month = $summary['month'];
+                $counts = $summary;
+                unset($counts['pg'], $counts['month']);
 
-                $rows[] = $this->formatMonthlyZoneSummaryRow($month, $summary->pg, $counts, false);
+                $rows[] = $this->formatMonthlyZoneSummaryRow($month, $summary['pg'], $counts, false);
 
                 foreach ($counts as $key => $count) {
                     $allPgByMonth[$month][$key] = ($allPgByMonth[$month][$key] ?? 0) + $count;
@@ -171,6 +225,7 @@ class WaterBalanceController extends Controller
             'pg' => $pg,
             'is_all_pg' => $isAllPg,
             ...$counts,
+            'area_location_product' => $totalArea * ($counts['location_count'] ?? 0),
             'percentage_wp' => $totalDays > 0 ? round($counts['count_wp'] / $totalDays * 100, 1) : 0,
             'percentage_mad_wp' => $totalDays > 0 ? round($counts['count_mad_wp'] / $totalDays * 100, 1) : 0,
             'percentage_fc_mad' => $totalDays > 0 ? round($counts['count_fc_mad'] / $totalDays * 100, 1) : 0,
