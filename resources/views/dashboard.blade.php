@@ -753,7 +753,7 @@
                                 <th style="text-align: center; color: #a16207;">Drying · Warning</th>
                                 <th style="text-align: center; color: #1d4ed8;">Safe · Optimal</th>
                                 <th style="text-align: center; color: #15803d;">Full · Field Capacity</th>
-                                <th style="text-align: center;">Total catatan</th>
+                                <th style="text-align: center;">Luas area aktif</th>
                             </tr>
                         </thead>
                         <tbody id="monthlyZoneSummaryBody">

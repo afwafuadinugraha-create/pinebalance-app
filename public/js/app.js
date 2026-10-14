@@ -5,10 +5,10 @@ let monthlyZonePieChartInstance = null;
 let currentLocationRows = [];
 
 const monthlyZoneChartZones = [
-    { label: 'Critical (Wilting Point)', count: 'count_wp', percentage: 'percentage_wp', className: 'zone-critical', color: '#ef4444' },
-    { label: 'Drying (Warning)', count: 'count_mad_wp', percentage: 'percentage_mad_wp', className: 'zone-drying', color: '#eab308' },
-    { label: 'Safe (Optimal)', count: 'count_fc_mad', percentage: 'percentage_fc_mad', className: 'zone-safe', color: '#3b82f6' },
-    { label: 'Full (Field Capacity)', count: 'count_fc', percentage: 'percentage_fc', className: 'zone-full', color: '#22c55e' },
+    { label: 'Critical (Wilting Point)', count: 'count_wp', areaCount: 'area_wp', percentage: 'percentage_wp', areaPercentage: 'area_percentage_wp', className: 'zone-critical', color: '#ef4444' },
+    { label: 'Drying (Warning)', count: 'count_mad_wp', areaCount: 'area_mad_wp', percentage: 'percentage_mad_wp', areaPercentage: 'area_percentage_mad_wp', className: 'zone-drying', color: '#eab308' },
+    { label: 'Safe (Optimal)', count: 'count_fc_mad', areaCount: 'area_fc_mad', percentage: 'percentage_fc_mad', areaPercentage: 'area_percentage_fc_mad', className: 'zone-safe', color: '#3b82f6' },
+    { label: 'Full (Field Capacity)', count: 'count_fc', areaCount: 'area_fc', percentage: 'percentage_fc', areaPercentage: 'area_percentage_fc', className: 'zone-full', color: '#22c55e' },
 ];
 
 function renderWilayahAlerts(pg = '') {
@@ -582,7 +582,8 @@ function renderMonthlyZoneView(rows, selectionValue) {
                 tr.appendChild(monthCell);
 
                 monthlyZoneChartZones.forEach(zone => {
-                    const percentage = Number(row[zone.percentage]) || 0;
+                    const percentage = Number(row[zone.areaPercentage] ?? row[zone.percentage]) || 0;
+                    const areaValue = Number(row[zone.areaCount]) || 0;
                     const cell = document.createElement('td');
                     cell.className = `zone-cell ${zone.className}`;
                     cell.style.textAlign = 'center';
@@ -593,7 +594,7 @@ function renderMonthlyZoneView(rows, selectionValue) {
 
                     const count = document.createElement('div');
                     count.className = 'zone-count';
-                    count.textContent = `${Number(row[zone.count]).toLocaleString('id-ID')} catatan`;
+                    count.textContent = `${areaValue.toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
 
                     const track = document.createElement('div');
                     track.className = 'zone-track';
@@ -612,9 +613,12 @@ function renderMonthlyZoneView(rows, selectionValue) {
                 });
 
                 const totalCell = document.createElement('td');
-                totalCell.textContent = Number(row.total_days).toLocaleString('id-ID');
                 totalCell.style.textAlign = 'center';
                 totalCell.style.fontWeight = '800';
+                totalCell.innerHTML = `
+                    <div>${Number(row.total_area_ha || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha</div>
+                    <div style="font-size: 11px; color: #64748b; font-weight: 600; margin-top: 3px;">${Number(row.location_count || 0).toLocaleString('id-ID')} lokasi</div>
+                `;
                 tr.appendChild(totalCell);
                 tbody.appendChild(tr);
             });
@@ -650,13 +654,13 @@ function renderMonthlyZonePieChart(rows, pgLabel) {
     }
 
     const monthCount = new Set(rows.map(row => row.month)).size;
-    const totalDays = rows.reduce((sum, row) => sum + (Number(row.total_days) || 0), 0);
-    const zoneCounts = monthlyZoneChartZones.map(zone => rows.reduce((sum, row) => sum + (Number(row[zone.count]) || 0), 0));
-    const zonePercentages = zoneCounts.map(count => totalDays > 0 ? count / totalDays * 100 : 0);
+    const totalArea = rows.reduce((sum, row) => sum + (Number(row.total_area_ha) || 0), 0);
+    const zoneAreas = monthlyZoneChartZones.map(zone => rows.reduce((sum, row) => sum + (Number(row[zone.areaCount]) || 0), 0));
+    const zonePercentages = zoneAreas.map(area => totalArea > 0 ? area / totalArea * 100 : 0);
 
     if (meta) {
         meta.textContent = pgLabel && rows.length > 0
-            ? `${pgLabel} · gabungan ${monthCount} bulan · ${totalDays.toLocaleString('id-ID')} catatan harian`
+            ? `${pgLabel} · gabungan ${monthCount} bulan · ${totalArea.toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha area aktif tanaman`
             : 'Pilih PG untuk melihat komposisi semua bulan.';
     }
 
@@ -678,7 +682,7 @@ function renderMonthlyZonePieChart(rows, pgLabel) {
             const value = document.createElement('span');
             value.className = 'monthly-zone-legend-value';
             const count = document.createElement('strong');
-            count.textContent = `${zoneCounts[index].toLocaleString('id-ID')} catatan`;
+            count.textContent = `${zoneAreas[index].toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
             const percentage = document.createElement('span');
             percentage.textContent = `${zonePercentages[index].toFixed(1)}%`;
             value.append(count, percentage);
@@ -693,7 +697,7 @@ function renderMonthlyZonePieChart(rows, pgLabel) {
         data: {
             labels: monthlyZoneChartZones.map(zone => zone.label),
             datasets: [{
-                data: zoneCounts,
+                data: zoneAreas,
                 backgroundColor: monthlyZoneChartZones.map(zone => zone.color),
                 borderColor: '#ffffff',
                 borderWidth: 2,
@@ -709,7 +713,7 @@ function renderMonthlyZonePieChart(rows, pgLabel) {
                     callbacks: {
                         label(context) {
                             const zone = monthlyZoneChartZones[context.dataIndex];
-                            return `${zone.label}: ${zoneCounts[context.dataIndex].toLocaleString('id-ID')} catatan (${zonePercentages[context.dataIndex].toFixed(1)}%)`;
+                            return `${zone.label}: ${zoneAreas[context.dataIndex].toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha (${zonePercentages[context.dataIndex].toFixed(1)}%)`;
                         },
                     },
                 },

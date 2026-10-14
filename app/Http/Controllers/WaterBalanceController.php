@@ -74,6 +74,8 @@ class WaterBalanceController extends Controller
                 'pg',
                 'lokasi',
                 DB::raw('COUNT(*) as total_hari'),
+                DB::raw('SUM(COALESCE(luas_siram_real_ha, 0)) as total_area_ha'),
+                DB::raw('COUNT(DISTINCT lokasi) as location_count'),
                 DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc"),
                 DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN 1 ELSE 0 END) as count_fc_mad"),
                 DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
@@ -106,10 +108,16 @@ class WaterBalanceController extends Controller
                 'pg',
                 DB::raw("{$monthExpression} as month"),
                 DB::raw('COUNT(*) as total_days'),
+                DB::raw('COUNT(DISTINCT lokasi) as location_count'),
+                DB::raw('SUM(COALESCE(luas_siram_real_ha, 0)) as total_area_ha'),
                 DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as count_wp"),
                 DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
                 DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN 1 ELSE 0 END) as count_fc_mad"),
-                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc")
+                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc"),
+                DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN COALESCE(luas_siram_real_ha, 0) ELSE 0 END) as area_wp"),
+                DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN COALESCE(luas_siram_real_ha, 0) ELSE 0 END) as area_mad_wp"),
+                DB::raw("SUM(CASE WHEN status_zone = 'FC - MAD 50%' THEN COALESCE(luas_siram_real_ha, 0) ELSE 0 END) as area_fc_mad"),
+                DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN COALESCE(luas_siram_real_ha, 0) ELSE 0 END) as area_fc")
             )
             ->groupBy('pg')
             ->groupByRaw($monthExpression)
@@ -125,10 +133,16 @@ class WaterBalanceController extends Controller
                 $month = $summary->month;
                 $counts = [
                     'total_days' => (int) $summary->total_days,
+                    'location_count' => (int) $summary->location_count,
+                    'total_area_ha' => (float) $summary->total_area_ha,
                     'count_wp' => (int) $summary->count_wp,
                     'count_mad_wp' => (int) $summary->count_mad_wp,
                     'count_fc_mad' => (int) $summary->count_fc_mad,
                     'count_fc' => (int) $summary->count_fc,
+                    'area_wp' => (float) $summary->area_wp,
+                    'area_mad_wp' => (float) $summary->area_mad_wp,
+                    'area_fc_mad' => (float) $summary->area_fc_mad,
+                    'area_fc' => (float) $summary->area_fc,
                 ];
 
                 $rows[] = $this->formatMonthlyZoneSummaryRow($month, $summary->pg, $counts, false);
@@ -150,6 +164,7 @@ class WaterBalanceController extends Controller
     private function formatMonthlyZoneSummaryRow(string $month, string $pg, array $counts, bool $isAllPg): array
     {
         $totalDays = $counts['total_days'];
+        $totalArea = (float) ($counts['total_area_ha'] ?? 0);
 
         return [
             'month' => $month,
@@ -160,6 +175,10 @@ class WaterBalanceController extends Controller
             'percentage_mad_wp' => $totalDays > 0 ? round($counts['count_mad_wp'] / $totalDays * 100, 1) : 0,
             'percentage_fc_mad' => $totalDays > 0 ? round($counts['count_fc_mad'] / $totalDays * 100, 1) : 0,
             'percentage_fc' => $totalDays > 0 ? round($counts['count_fc'] / $totalDays * 100, 1) : 0,
+            'area_percentage_wp' => $totalArea > 0 ? round(($counts['area_wp'] ?? 0) / $totalArea * 100, 1) : 0,
+            'area_percentage_mad_wp' => $totalArea > 0 ? round(($counts['area_mad_wp'] ?? 0) / $totalArea * 100, 1) : 0,
+            'area_percentage_fc_mad' => $totalArea > 0 ? round(($counts['area_fc_mad'] ?? 0) / $totalArea * 100, 1) : 0,
+            'area_percentage_fc' => $totalArea > 0 ? round(($counts['area_fc'] ?? 0) / $totalArea * 100, 1) : 0,
         ];
     }
 
