@@ -698,19 +698,20 @@ function loadMonthlyZoneDetails(month, zone, button) {
             tbody.replaceChildren();
             if (rows.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Tidak ada catatan untuk zona dan filter yang dipilih.</td></tr>';
-                if (meta) meta.textContent += ' · 0 catatan';
+                if (meta) meta.textContent += ' · 0 lokasi';
 
                 return;
             }
 
             rows.forEach(row => {
                 const tr = document.createElement('tr');
-                const dateCell = document.createElement('td');
-                dateCell.textContent = formatDateCustom(row.tanggal);
                 const pgCell = document.createElement('td');
                 pgCell.textContent = formatMonthlyZonePg(row.pg);
                 const locationCell = document.createElement('td');
                 locationCell.textContent = row.lokasi || '-';
+                const daysCell = document.createElement('td');
+                daysCell.textContent = Number(row.total_hari || 0).toLocaleString('id-ID');
+                daysCell.style.textAlign = 'center';
                 const areaCell = document.createElement('td');
                 areaCell.textContent = `${Number(row.luas_tanaman_ha || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ha`;
                 areaCell.style.textAlign = 'center';
@@ -718,11 +719,11 @@ function loadMonthlyZoneDetails(month, zone, button) {
                 zoneCell.textContent = row.status_zone || '-';
                 const dailyStatusCell = document.createElement('td');
                 dailyStatusCell.textContent = row.status_harian || '-';
-                tr.append(dateCell, pgCell, locationCell, areaCell, zoneCell, dailyStatusCell);
+                tr.append(pgCell, locationCell, daysCell, areaCell, zoneCell, dailyStatusCell);
                 tbody.appendChild(tr);
             });
 
-            if (meta) meta.textContent += ` · ${rows.length.toLocaleString('id-ID')} catatan`;
+            if (meta) meta.textContent += ` · ${rows.length.toLocaleString('id-ID')} lokasi`;
         })
         .catch(() => {
             if (requestId !== monthlyZoneDetailsRequestId || !button.isConnected) return;

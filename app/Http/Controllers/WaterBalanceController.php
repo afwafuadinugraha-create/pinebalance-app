@@ -62,11 +62,17 @@ class WaterBalanceController extends Controller
         $query = DailyWaterBalance::query();
 
         if ($pg && strtolower($pg) !== 'all') {
-            $query->where('pg', $pg);
+            $normalizedPg = $this->normalizeFilterValue($pg);
+            $query->where(function ($subQuery) use ($normalizedPg) {
+                $subQuery->where('pg', $normalizedPg)
+                    ->orWhere('pg', 'PG '.$normalizedPg)
+                    ->orWhere('pg', 'PG-'.$normalizedPg)
+                    ->orWhere('pg', 'PG_'.$normalizedPg);
+            });
         }
 
         if ($request->filled('status_harian')) {
-            $query->where('status_harian', $request->query('status_harian'));
+            $query->whereRaw('LOWER(COALESCE(status_harian, "")) = ?', [strtolower(trim((string) $request->query('status_harian')))]);
         }
 
         $summary = $query
@@ -100,7 +106,7 @@ class WaterBalanceController extends Controller
         $query = DailyWaterBalance::query();
 
         if ($request->filled('status_harian')) {
-            $query->where('status_harian', $request->query('status_harian'));
+            $query->whereRaw('LOWER(COALESCE(status_harian, "")) = ?', [strtolower(trim((string) $request->query('status_harian')))]);
         }
 
         $latestAreaDates = (clone $query)
@@ -236,11 +242,17 @@ class WaterBalanceController extends Controller
             ->orderBy('tanggal');
 
         if (! empty($validated['pg']) && strtolower($validated['pg']) !== 'all') {
-            $query->where('pg', $validated['pg']);
+            $normalizedPg = $this->normalizeFilterValue($validated['pg']);
+            $query->where(function ($subQuery) use ($normalizedPg) {
+                $subQuery->where('pg', $normalizedPg)
+                    ->orWhere('pg', 'PG '.$normalizedPg)
+                    ->orWhere('pg', 'PG-'.$normalizedPg)
+                    ->orWhere('pg', 'PG_'.$normalizedPg);
+            });
         }
 
         if (! empty($validated['status_harian'])) {
-            $query->where('status_harian', $validated['status_harian']);
+            $query->whereRaw('LOWER(COALESCE(status_harian, "")) = ?', [strtolower(trim((string) $validated['status_harian']))]);
         }
 
         $records = $query->get();
@@ -252,19 +264,33 @@ class WaterBalanceController extends Controller
 
         $rows = $records
             ->where('status_zone', $validated['zone'])
-            ->map(function ($record) use ($latestAreaByLocation) {
+            ->groupBy(fn ($record) => $record->pg.'|'.$record->lokasi)
+            ->map(function ($locationRecords) use ($latestAreaByLocation) {
+                $record = $locationRecords->first();
+
                 return [
-                    'tanggal' => $record->tanggal,
                     'pg' => $record->pg,
                     'lokasi' => $record->lokasi,
                     'luas_tanaman_ha' => $latestAreaByLocation[$record->pg.'|'.$record->lokasi] ?? 0,
                     'status_zone' => $record->status_zone,
-                    'status_harian' => $record->status_harian,
+                    'status_harian' => $locationRecords
+                        ->pluck('status_harian')
+                        ->filter()
+                        ->unique()
+                        ->implode(', '),
+                    'total_hari' => $locationRecords->count(),
                 ];
             })
             ->values();
 
         return response()->json(['rows' => $rows]);
+    }
+
+    private function normalizeFilterValue(string $value): string
+    {
+        $normalized = preg_replace('/^pg\s*[-_\s]*/i', '', trim((string) $value));
+
+        return trim((string) $normalized, " \t\n\r\0\x0B-");
     }
 
     private function formatMonthlyZoneSummaryRow(string $month, string $pg, array $counts, bool $isAllPg): array
@@ -293,7 +319,13 @@ class WaterBalanceController extends Controller
         $query = DailyWaterBalance::query();
 
         if ($request->filled('pg')) {
-            $query->where('pg', $request->query('pg'));
+            $normalizedPg = $this->normalizeFilterValue($request->query('pg'));
+            $query->where(function ($subQuery) use ($normalizedPg) {
+                $subQuery->where('pg', $normalizedPg)
+                    ->orWhere('pg', 'PG '.$normalizedPg)
+                    ->orWhere('pg', 'PG-'.$normalizedPg)
+                    ->orWhere('pg', 'PG_'.$normalizedPg);
+            });
         }
 
         $alerts = $query
@@ -326,11 +358,17 @@ class WaterBalanceController extends Controller
         $query = DailyWaterBalance::query();
 
         if (! $isAllPgs) {
-            $query->where('pg', $pg);
+            $normalizedPg = $this->normalizeFilterValue($pg);
+            $query->where(function ($subQuery) use ($normalizedPg) {
+                $subQuery->where('pg', $normalizedPg)
+                    ->orWhere('pg', 'PG '.$normalizedPg)
+                    ->orWhere('pg', 'PG-'.$normalizedPg)
+                    ->orWhere('pg', 'PG_'.$normalizedPg);
+            });
         }
 
         if ($request->filled('status_harian')) {
-            $query->where('status_harian', $request->query('status_harian'));
+            $query->whereRaw('LOWER(COALESCE(status_harian, "")) = ?', [strtolower(trim((string) $request->query('status_harian')))]);
         }
 
         // Ambil seluruh data tanggal untuk mendeteksi rentang bulan secara menyeluruh (termasuk Mei)

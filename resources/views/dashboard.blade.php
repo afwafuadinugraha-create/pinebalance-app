@@ -764,9 +764,9 @@
                     <table class="monthly-zone-details-table">
                         <thead>
                             <tr>
-                                <th>Tanggal</th>
                                 <th>PG</th>
                                 <th>Lokasi</th>
+                                <th style="text-align: center;">Jumlah hari</th>
                                 <th style="text-align: center;">Luas tanaman</th>
                                 <th>Status air</th>
                                 <th>Status harian</th>
