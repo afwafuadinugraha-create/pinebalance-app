@@ -15,6 +15,7 @@ class DailyWaterBalanceExportTest extends TestCase
         DailyWaterBalance::create([
             'pg' => 'PG-01',
             'lokasi' => 'Lokasi A',
+            'status_lokasi' => 'NSFC',
             'tanggal' => '2026-09-01',
             'rainfall_mm' => 12.5,
             'luas_siram_rencana_ha' => 10,
@@ -28,6 +29,8 @@ class DailyWaterBalanceExportTest extends TestCase
 
         $response = $this->get('/api/water-balance/export?pg=PG-01');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('status_lokasi')
+            ->assertSee('NSFC');
     }
 }

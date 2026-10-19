@@ -458,11 +458,14 @@ function renderRawDataTable(rows) {
             <td><span style="background:${badgeColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${r.status_zone}</span></td>
             <td><span style="background:${dailyStatus === '-' ? '#cbd5e1' : dailyStatusColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${displayDailyStatus}</span>${r.status_keterangan ? `<br><small style="color:#64748b;">${r.status_keterangan}</small>` : ''}</td>
         `;
+        const locationStatusCell = document.createElement('td');
+        locationStatusCell.textContent = r.status_lokasi || '-';
+        tr.insertBefore(locationStatusCell, tr.children[2]);
         tbody.appendChild(tr);
     });
 }
 
-function renderPGSummaryTable(pg, status = '') {
+function renderPGSummaryTable(pg, status = '', statusLokasi = '') {
     const isAllPG = !pg || pg.toLowerCase() === 'all';
     const cleanPG = isAllPG ? 'ALL PG' : pg.toString().replace(/^pg\s*/gi, '').trim();
     const summaryPgBadge = document.getElementById('summaryPgBadge');
@@ -470,6 +473,7 @@ function renderPGSummaryTable(pg, status = '') {
 
     const params = new URLSearchParams({ pg: isAllPG ? 'all' : pg });
     if (status) params.set('status_harian', status);
+    if (statusLokasi) params.set('status_lokasi', statusLokasi);
 
     fetch(`/api/pg-summary?${params}`)
         .then(response => response.json())
@@ -479,7 +483,7 @@ function renderPGSummaryTable(pg, status = '') {
             summaryTbody.innerHTML = '';
 
             if (!Array.isArray(summaryList) || summaryList.length === 0) {
-                summaryTbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No location data for this PG.</td></tr>`;
+                summaryTbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No location data for this PG.</td></tr>`;
                 return;
             }
 
@@ -503,6 +507,9 @@ function renderPGSummaryTable(pg, status = '') {
                     <td style="text-align: center; color: #ef4444; font-weight: 700;">${item.count_wp} Days (${getPerc(item.count_wp)}%)</td>
                     <td style="text-align: center; font-weight: 800;">${total} Days</td>
                 `;
+                const locationStatusCell = document.createElement('td');
+                locationStatusCell.textContent = item.status_lokasi || 'Belum diisi';
+                tr.insertBefore(locationStatusCell, tr.children[2]);
                 summaryTbody.appendChild(tr);
             });
 
@@ -516,8 +523,13 @@ function renderMonthlyZoneSummary() {
     const selection = document.getElementById('monthlyZonePgSelection');
     if (!tbody || !selection) return;
 
+    const params = new URLSearchParams();
     const status = document.getElementById('monthlyZoneStatusSelection')?.value || '';
-    const query = status ? `?status_harian=${encodeURIComponent(status)}` : '';
+    const statusLokasi = document.getElementById('monthlyZoneLocationStatusSelection')?.value || '';
+    if (status) params.set('status_harian', status);
+    if (statusLokasi) params.set('status_lokasi', statusLokasi);
+    const queryString = params.toString();
+    const query = queryString ? `?${queryString}` : '';
 
     fetch(`/api/monthly-zone-summary${query}`)
         .then(response => response.json())
@@ -554,8 +566,9 @@ function onAnalyticsPGChange() {
 
     const selectedPG = selection.value === '__all__' ? 'all' : selection.value.replace(/^pg:/, '');
     const selectedStatus = document.getElementById('monthlyZoneStatusSelection')?.value || '';
-    renderPGSummaryTable(selectedPG, selectedStatus);
-    renderPGMonthlyIrrigationTable(selectedPG, selectedStatus);
+    const selectedLocationStatus = document.getElementById('monthlyZoneLocationStatusSelection')?.value || '';
+    renderPGSummaryTable(selectedPG, selectedStatus, selectedLocationStatus);
+    renderPGMonthlyIrrigationTable(selectedPG, selectedStatus, selectedLocationStatus);
 }
 
 function renderMonthlyZoneView(rows, selectionValue) {
@@ -575,13 +588,16 @@ function renderMonthlyZoneView(rows, selectionValue) {
     if (tbody) {
         tbody.replaceChildren();
         if (selectedRows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Data bulanan belum tersedia untuk PG ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Data bulanan belum tersedia untuk PG ini.</td></tr>';
         } else {
             selectedRows.forEach(row => {
                 const tr = document.createElement('tr');
                 const monthCell = document.createElement('td');
                 monthCell.textContent = formatMonthlyZoneMonth(row.month);
                 tr.appendChild(monthCell);
+                const locationStatusCell = document.createElement('td');
+                locationStatusCell.textContent = row.status_lokasi || 'Belum diisi';
+                tr.appendChild(locationStatusCell);
 
                 monthlyZoneChartZones.forEach(zone => {
                     const percentage = Number(row[zone.areaPercentage] ?? row[zone.percentage]) || 0;
@@ -622,7 +638,7 @@ function renderMonthlyZoneView(rows, selectionValue) {
                             activeButton.setAttribute('aria-pressed', 'false');
                         });
                         button.setAttribute('aria-pressed', 'true');
-                        loadMonthlyZoneDetails(row.month, zone, button);
+                        loadMonthlyZoneDetails(row.month, zone, button, row.status_lokasi);
                     });
                     cell.appendChild(button);
                     tr.appendChild(cell);
@@ -666,10 +682,10 @@ function clearMonthlyZoneDetails() {
     const meta = document.getElementById('monthlyZoneDetailsMeta');
     const tbody = document.getElementById('monthlyZoneDetailsBody');
     if (meta) meta.textContent = '';
-    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Belum ada zona yang dipilih.</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Belum ada zona yang dipilih.</td></tr>';
 }
 
-function loadMonthlyZoneDetails(month, zone, button) {
+function loadMonthlyZoneDetails(month, zone, button, rowStatusLokasi = '') {
     const meta = document.getElementById('monthlyZoneDetailsMeta');
     const tbody = document.getElementById('monthlyZoneDetailsBody');
     const selection = document.getElementById('monthlyZonePgSelection');
@@ -678,12 +694,14 @@ function loadMonthlyZoneDetails(month, zone, button) {
     const requestId = ++monthlyZoneDetailsRequestId;
     const selectedPG = selection.value === '__all__' ? 'all' : selection.value.replace(/^pg:/, '');
     const selectedStatus = document.getElementById('monthlyZoneStatusSelection')?.value || '';
+    const selectedLocationStatus = document.getElementById('monthlyZoneLocationStatusSelection')?.value || rowStatusLokasi || '__empty__';
     const params = new URLSearchParams({ month, zone: zone.status, pg: selectedPG });
     if (selectedStatus) params.set('status_harian', selectedStatus);
+    if (selectedLocationStatus) params.set('status_lokasi', selectedLocationStatus);
 
     const pgLabel = selectedPG === 'all' ? 'ALL PG' : formatMonthlyZonePg(selectedPG);
     if (meta) meta.textContent = `${pgLabel} · ${formatMonthlyZoneMonth(month)} · ${zone.label}`;
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Memuat rincian data...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Memuat rincian data...</td></tr>';
 
     fetch(`/api/monthly-zone-details?${params}`)
         .then(response => {
@@ -697,7 +715,7 @@ function loadMonthlyZoneDetails(month, zone, button) {
             const rows = Array.isArray(result.rows) ? result.rows : [];
             tbody.replaceChildren();
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Tidak ada catatan untuk zona dan filter yang dipilih.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Tidak ada catatan untuk zona dan filter yang dipilih.</td></tr>';
                 if (meta) meta.textContent += ' · 0 lokasi';
 
                 return;
@@ -709,6 +727,8 @@ function loadMonthlyZoneDetails(month, zone, button) {
                 pgCell.textContent = formatMonthlyZonePg(row.pg);
                 const locationCell = document.createElement('td');
                 locationCell.textContent = row.lokasi || '-';
+                const locationStatusCell = document.createElement('td');
+                locationStatusCell.textContent = row.status_lokasi || 'Belum diisi';
                 const daysCell = document.createElement('td');
                 daysCell.textContent = Number(row.total_hari || 0).toLocaleString('id-ID');
                 daysCell.style.textAlign = 'center';
@@ -719,7 +739,7 @@ function loadMonthlyZoneDetails(month, zone, button) {
                 zoneCell.textContent = row.status_zone || '-';
                 const dailyStatusCell = document.createElement('td');
                 dailyStatusCell.textContent = row.status_harian || '-';
-                tr.append(pgCell, locationCell, daysCell, areaCell, zoneCell, dailyStatusCell);
+                tr.append(pgCell, locationCell, locationStatusCell, daysCell, areaCell, zoneCell, dailyStatusCell);
                 tbody.appendChild(tr);
             });
 
@@ -727,7 +747,7 @@ function loadMonthlyZoneDetails(month, zone, button) {
         })
         .catch(() => {
             if (requestId !== monthlyZoneDetailsRequestId || !button.isConnected) return;
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #b91c1c;">Rincian gagal dimuat. Coba pilih zona lagi.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #b91c1c;">Rincian gagal dimuat. Coba pilih zona lagi.</td></tr>';
         });
 }
 
@@ -778,10 +798,11 @@ function renderCompareBarChart(summaryList, cleanPG, isAllPG = false) {
     });
 }
 
-function renderPGMonthlyIrrigationTable(pg, status = '') {
+function renderPGMonthlyIrrigationTable(pg, status = '', statusLokasi = '') {
     const isAllPG = !pg || pg.toLowerCase() === 'all';
     const params = new URLSearchParams({ pg: isAllPG ? 'all' : pg });
     if (status) params.set('status_harian', status);
+    if (statusLokasi) params.set('status_lokasi', statusLokasi);
 
     fetch(`/api/pg-irrigation-monthly?${params}`)
         .then(response => response.json())
@@ -794,6 +815,7 @@ function renderPGMonthlyIrrigationTable(pg, status = '') {
             if (!headerTr || !tbody) return;
 
             let headerHTML = `<th>PG - Location</th>`;
+            headerHTML += `<th>Status Lokasi</th>`;
             months.forEach(m => {
                 headerHTML += `<th style="text-align: center;">${formatMonthName(m)}</th>`;
             });
@@ -803,7 +825,7 @@ function renderPGMonthlyIrrigationTable(pg, status = '') {
 
             tbody.innerHTML = '';
             if (report.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${months.length + 3}" style="text-align:center;">No irrigation history for this PG.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${months.length + 4}" style="text-align:center;">No irrigation history for this PG.</td></tr>`;
                 return;
             }
 
@@ -812,6 +834,7 @@ function renderPGMonthlyIrrigationTable(pg, status = '') {
                 let rowTotal = 0;
 
                 let rowHTML = `<td style="font-weight: 700;">${formatMonthlyZonePg(locationSummary.pg)} - Location ${cleanLokasi}</td>`;
+                rowHTML += '<td></td>';
 
                 months.forEach(m => {
                     const monthlyData = locationSummary.months[m];
@@ -830,6 +853,7 @@ function renderPGMonthlyIrrigationTable(pg, status = '') {
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = rowHTML;
+                tr.children[1].textContent = locationSummary.status_lokasi || 'Belum diisi';
                 tbody.appendChild(tr);
             });
         })

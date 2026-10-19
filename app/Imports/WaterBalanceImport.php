@@ -84,6 +84,9 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                 $pg = trim(preg_replace('/^pg\s*/i', '', $rawPg));
                 $wilayah = $this->nullableString($this->getExactValue($row, ['wilayah', 'region', 'area'])) ?? '';
                 $lokasi = trim(preg_replace('/^lokasi\s*/i', '', $rawLokasi));
+                $statusLokasi = $this->nullableString($this->getExactValue($row, [
+                    'status_lokasi', 'status lokasi', 'location_status', 'crop_status',
+                ]));
 
                 if ($pg === '' || $lokasi === '') {
                     $this->skipped++;
@@ -169,25 +172,30 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     ->where('tanggal', $tanggal)
                     ->exists();
 
+                $dailyAttributes = [
+                    'wilayah' => $wilayah !== '' ? $wilayah : null,
+                    'rainfall_mm' => $rainfall,
+                    'luas_siram_rencana_ha' => $luasRencana,
+                    'luas_siram_real_ha' => $luasReal,
+                    'irigasi_mm' => $irigasi,
+                    'irigasi_efektif_mm' => $irigasiEfektif,
+                    'evapotranspirasi_mm' => $evapotranspirasi,
+                    'water_balance_mm' => $currentWB,
+                    'status_zone' => $statusZone,
+                    'status_harian' => $statusHarian,
+                    'status_keterangan' => $statusKeterangan,
+                ];
+                if ($statusLokasi !== null) {
+                    $dailyAttributes['status_lokasi'] = strtoupper($statusLokasi);
+                }
+
                 DailyWaterBalance::updateOrCreate(
                     [
                         'pg' => $pg,
                         'lokasi' => $lokasi,
                         'tanggal' => $tanggal,
                     ],
-                    [
-                        'wilayah' => $wilayah !== '' ? $wilayah : null,
-                        'rainfall_mm' => $rainfall,
-                        'luas_siram_rencana_ha' => $luasRencana,
-                        'luas_siram_real_ha' => $luasReal,
-                        'irigasi_mm' => $irigasi,
-                        'irigasi_efektif_mm' => $irigasiEfektif,
-                        'evapotranspirasi_mm' => $evapotranspirasi,
-                        'water_balance_mm' => $currentWB,
-                        'status_zone' => $statusZone,
-                        'status_harian' => $statusHarian,
-                        'status_keterangan' => $statusKeterangan,
-                    ]
+                    $dailyAttributes
                 );
 
                 if ($exists) {

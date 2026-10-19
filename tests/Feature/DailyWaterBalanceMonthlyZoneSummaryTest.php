@@ -220,4 +220,56 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('rows.0.total_hari', 3)
             ->assertJsonPath('rows.0.luas_tanaman_ha', 12);
     }
+
+    public function test_location_status_is_available_and_filters_analytics_summaries(): void
+    {
+        foreach ([
+            ['tanggal' => '2026-08-01', 'status_lokasi' => 'NSFC', 'zone' => 'At WP'],
+            ['tanggal' => '2026-08-02', 'status_lokasi' => 'NSSC', 'zone' => 'At FC'],
+        ] as $record) {
+            DailyWaterBalance::create([
+                'pg' => '01',
+                'lokasi' => 'A',
+                'tanggal' => $record['tanggal'],
+                'status_lokasi' => $record['status_lokasi'],
+                'luas_siram_rencana_ha' => 10,
+                'irigasi_mm' => 5,
+                'water_balance_mm' => 50,
+                'status_zone' => $record['zone'],
+            ]);
+        }
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Status Lokasi')
+            ->assertSee('NSFC')
+            ->assertSee('NSSC');
+
+        $this->getJson('/api/water-balance-data?pg=01&lokasi=A')
+            ->assertOk()
+            ->assertJsonPath('0.status_lokasi', 'NSFC')
+            ->assertJsonPath('1.status_lokasi', 'NSSC');
+
+        $this->getJson('/api/monthly-zone-summary?status_lokasi=nsfc')
+            ->assertOk()
+            ->assertJsonCount(2, 'rows')
+            ->assertJsonPath('rows.0.status_lokasi', 'NSFC')
+            ->assertJsonPath('rows.0.total_days', 1)
+            ->assertJsonPath('rows.1.pg', 'ALL PG')
+            ->assertJsonPath('rows.1.status_lokasi', 'NSFC');
+
+        $this->getJson('/api/pg-summary?pg=01&status_lokasi=NSSC')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.status_lokasi', 'NSSC')
+            ->assertJsonPath('0.count_fc', 1);
+
+        $this->getJson('/api/monthly-zone-details?month=2026-08&zone=At%20FC&pg=01&status_lokasi=NSSC')
+            ->assertOk()
+            ->assertJsonPath('rows.0.status_lokasi', 'NSSC');
+
+        $this->getJson('/api/pg-irrigation-monthly?pg=01&status_lokasi=NSSC')
+            ->assertOk()
+            ->assertJsonPath('report.0.status_lokasi', 'NSSC');
+    }
 }

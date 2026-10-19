@@ -672,6 +672,7 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Wilayah</th>
+                                <th>Status Lokasi</th>
                                 <th>Rainfall (mm)</th>
                                 <th>Irrigated Area / Total (Ha)</th>
                                 <th>Irrigation (mm)</th>
@@ -683,7 +684,7 @@
                         </thead>
                         <tbody id="excelTableBody">
                             <tr>
-                                        <td colspan="9">
+                                        <td colspan="10">
                                     <div class="empty-state-box">
                                         <i class="fa-solid fa-folder-open"></i>
                                         <p>Select a location using the filter.</p>
@@ -723,6 +724,16 @@
                                 @endif
                             </select>
                         </label>
+                        <label for="monthlyZoneLocationStatusSelection">Status Lokasi
+                            <select id="monthlyZoneLocationStatusSelection" aria-label="Filter status lokasi untuk semua ringkasan" onchange="onAnalyticsStatusChange()">
+                                <option value="" selected>Semua status lokasi</option>
+                                @if(isset($statusLokasiList))
+                                    @foreach($statusLokasiList as $statusLokasi)
+                                        <option value="{{ $statusLokasi }}">{{ $statusLokasi }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </label>
                     </div>
                 </div>
             </section>
@@ -737,6 +748,7 @@
                         <thead>
                             <tr>
                                 <th>Bulan</th>
+                                <th>Status Lokasi</th>
                                 <th style="text-align: center; color: #b91c1c;">WP</th>
                                 <th style="text-align: center; color: #a16207;">MAD 50%-WP</th>
                                 <th style="text-align: center; color: #1d4ed8;">FC-MAD 50%</th>
@@ -746,7 +758,7 @@
                             </tr>
                         </thead>
                         <tbody id="monthlyZoneSummaryBody">
-                            <tr><td colspan="7" style="text-align: center;">Loading monthly summary...</td></tr>
+                            <tr><td colspan="8" style="text-align: center;">Loading monthly summary...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -763,6 +775,7 @@
                             <tr>
                                 <th>PG</th>
                                 <th>Lokasi</th>
+                                <th>Status Lokasi</th>
                                 <th style="text-align: center;">Jumlah hari</th>
                                 <th style="text-align: center;">Luas tanaman</th>
                                 <th>Status air</th>
@@ -770,7 +783,7 @@
                             </tr>
                         </thead>
                         <tbody id="monthlyZoneDetailsBody">
-                            <tr><td colspan="6" style="text-align: center;">Belum ada zona yang dipilih.</td></tr>
+                            <tr><td colspan="7" style="text-align: center;">Belum ada zona yang dipilih.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -787,6 +800,7 @@
                             <tr>
                                 <th style="width: 60px; text-align: center;">Rank</th>
                                 <th>PG - Location</th>
+                                <th>Status Lokasi</th>
                                 <th style="text-align: center;">FC (Days / %)</th>
                                 <th style="text-align: center;">FC-MAD 50% (Days / %)</th>
                                 <th style="text-align: center;">MAD 50%-WP (Days / %)</th>
@@ -796,7 +810,7 @@
                         </thead>
                         <tbody id="summaryTableBody">
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="empty-state-box">
                                         <i class="fa-solid fa-chart-pie"></i>
                                         <p>Select a PG to compare all locations.</p>
@@ -830,13 +844,14 @@
                         <thead>
                             <tr id="irrigationMonthlyHeader">
                                 <th>PG - Location</th>
+                                <th>Status Lokasi</th>
                                 <th style="text-align: center; color: #0284c7;">Total Irrigation</th>
                                 <th style="text-align: center; color: #16a34a;">Average / Month</th>
                             </tr>
                         </thead>
                         <tbody id="irrigationMonthlyBody">
                             <tr>
-                                <td colspan="5" style="text-align:center;">
+                                <td colspan="6" style="text-align:center;">
                                     <div class="empty-state-box">
                                         <i class="fa-solid fa-droplet-slash"></i>
                                         <p>Select a PG to load the monthly summary for all locations.</p>
