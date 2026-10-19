@@ -221,7 +221,7 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('rows.0.luas_tanaman_ha', 12);
     }
 
-    public function test_location_status_is_available_and_filters_analytics_summaries(): void
+    public function test_location_status_is_available_in_daily_data_but_not_analytics(): void
     {
         foreach ([
             ['tanggal' => '2026-08-01', 'status_lokasi' => 'NSFC', 'zone' => 'At WP'],
@@ -239,11 +239,13 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ]);
         }
 
-        $this->get('/')
+        $dashboard = $this->get('/')
             ->assertOk()
-            ->assertSee('Status Lokasi')
-            ->assertSee('NSFC')
-            ->assertSee('NSSC');
+            ->assertSee('Status Lokasi');
+        $summaryStart = strpos($dashboard->getContent(), '<!-- TAB 3: SUMMARY & ANALYTICS -->');
+
+        $this->assertNotFalse($summaryStart);
+        $this->assertStringNotContainsString('Status Lokasi', substr($dashboard->getContent(), $summaryStart));
 
         $this->getJson('/api/water-balance-data?pg=01&lokasi=A')
             ->assertOk()
@@ -253,23 +255,26 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
         $this->getJson('/api/monthly-zone-summary?status_lokasi=nsfc')
             ->assertOk()
             ->assertJsonCount(2, 'rows')
-            ->assertJsonPath('rows.0.status_lokasi', 'NSFC')
-            ->assertJsonPath('rows.0.total_days', 1)
+            ->assertJsonPath('rows.0.total_days', 2)
             ->assertJsonPath('rows.1.pg', 'ALL PG')
-            ->assertJsonPath('rows.1.status_lokasi', 'NSFC');
+            ->assertJsonPath('rows.1.total_days', 2)
+            ->assertJsonMissingPath('rows.0.status_lokasi');
 
         $this->getJson('/api/pg-summary?pg=01&status_lokasi=NSSC')
             ->assertOk()
             ->assertJsonCount(1)
-            ->assertJsonPath('0.status_lokasi', 'NSSC')
-            ->assertJsonPath('0.count_fc', 1);
+            ->assertJsonPath('0.count_fc', 1)
+            ->assertJsonPath('0.count_wp', 1)
+            ->assertJsonMissingPath('0.status_lokasi');
 
         $this->getJson('/api/monthly-zone-details?month=2026-08&zone=At%20FC&pg=01&status_lokasi=NSSC')
             ->assertOk()
-            ->assertJsonPath('rows.0.status_lokasi', 'NSSC');
+            ->assertJsonPath('rows.0.lokasi', 'A')
+            ->assertJsonMissingPath('rows.0.status_lokasi');
 
         $this->getJson('/api/pg-irrigation-monthly?pg=01&status_lokasi=NSSC')
             ->assertOk()
-            ->assertJsonPath('report.0.status_lokasi', 'NSSC');
+            ->assertJsonPath('report.0.lokasi', 'A')
+            ->assertJsonMissingPath('report.0.status_lokasi');
     }
 }

@@ -27,16 +27,7 @@ class WaterBalanceController extends Controller
             ->all();
         usort($statusList, 'strnatcasecmp');
 
-        $statusLokasiList = DailyWaterBalance::query()
-            ->whereNotNull('status_lokasi')
-            ->where('status_lokasi', '<>', '')
-            ->select('status_lokasi')
-            ->distinct()
-            ->pluck('status_lokasi')
-            ->all();
-        usort($statusLokasiList, 'strnatcasecmp');
-
-        return view('dashboard', compact('pgList', 'statusList', 'statusLokasiList'));
+        return view('dashboard', compact('pgList', 'statusList'));
     }
 
     public function getLokasiByPG(Request $request)
@@ -84,15 +75,10 @@ class WaterBalanceController extends Controller
             $query->whereRaw('LOWER(COALESCE(status_harian, "")) = ?', [strtolower(trim((string) $request->query('status_harian')))]);
         }
 
-        if ($request->filled('status_lokasi')) {
-            $query->whereRaw('LOWER(COALESCE(status_lokasi, "")) = ?', [strtolower(trim((string) $request->query('status_lokasi')))]);
-        }
-
         $summary = $query
             ->select(
                 'pg',
                 'lokasi',
-                'status_lokasi',
                 DB::raw('COUNT(*) as total_hari'),
                 DB::raw('SUM(COALESCE(luas_siram_real_ha, 0)) as total_area_ha'),
                 DB::raw('COUNT(DISTINCT lokasi) as location_count'),
@@ -101,7 +87,7 @@ class WaterBalanceController extends Controller
                 DB::raw("SUM(CASE WHEN status_zone = 'MAD 50% - WP' THEN 1 ELSE 0 END) as count_mad_wp"),
                 DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as count_wp")
             )
-            ->groupBy('pg', 'lokasi', 'status_lokasi')
+            ->groupBy('pg', 'lokasi')
             ->orderBy('count_wp', 'desc')
             ->orderBy('count_mad_wp', 'desc')
             ->get();
@@ -121,10 +107,6 @@ class WaterBalanceController extends Controller
 
         if ($request->filled('status_harian')) {
             $query->whereRaw('LOWER(COALESCE(status_harian, "")) = ?', [strtolower(trim((string) $request->query('status_harian')))]);
-        }
-
-        if ($request->filled('status_lokasi')) {
-            $query->whereRaw('LOWER(COALESCE(status_lokasi, "")) = ?', [strtolower(trim((string) $request->query('status_lokasi')))]);
         }
 
         $latestAreaDates = (clone $query)
@@ -153,7 +135,6 @@ class WaterBalanceController extends Controller
             ->select(
                 'pg',
                 'lokasi',
-                'status_lokasi',
                 DB::raw("{$monthExpression} as month"),
                 DB::raw('COUNT(*) as total_days'),
                 DB::raw("SUM(CASE WHEN status_zone = 'At WP' THEN 1 ELSE 0 END) as count_wp"),
@@ -162,7 +143,6 @@ class WaterBalanceController extends Controller
                 DB::raw("SUM(CASE WHEN status_zone = 'At FC' THEN 1 ELSE 0 END) as count_fc")
             )
             ->groupBy('pg', 'lokasi')
-            ->groupBy('status_lokasi')
             ->groupByRaw($monthExpression)
             ->orderBy('pg')
             ->orderBy('month')
@@ -174,17 +154,15 @@ class WaterBalanceController extends Controller
         foreach ($locationSummaries as $locationSummary) {
             $month = $locationSummary->month;
             $pg = $locationSummary->pg;
-            $statusLokasi = (string) ($locationSummary->status_lokasi ?? '');
             $areaRows = $latestAreas->get($pg, collect())->get($month, collect());
             $latestArea = (float) ($areaRows->firstWhere('lokasi', $locationSummary->lokasi)->area_ha ?? 0);
             $totalDays = (int) $locationSummary->total_days;
-            $key = $pg.'|'.$month.'|'.$statusLokasi;
+            $key = $pg.'|'.$month;
 
             if (! isset($monthlySummary[$key])) {
                 $monthlySummary[$key] = [
                     'pg' => $pg,
                     'month' => $month,
-                    'status_lokasi' => $statusLokasi,
                     'total_days' => 0,
                     'location_count' => 0,
                     'total_area_ha' => 0.0,
@@ -224,23 +202,20 @@ class WaterBalanceController extends Controller
         foreach ($groupedMonthlySummary as $pgSummaries) {
             foreach ($pgSummaries->sortBy('month') as $summary) {
                 $month = $summary['month'];
-                $statusLokasi = $summary['status_lokasi'];
                 $counts = $summary;
-                unset($counts['pg'], $counts['month'], $counts['status_lokasi']);
+                unset($counts['pg'], $counts['month']);
 
-                $rows[] = $this->formatMonthlyZoneSummaryRow($month, $summary['pg'], $counts, false, $statusLokasi);
+                $rows[] = $this->formatMonthlyZoneSummaryRow($month, $summary['pg'], $counts, false);
 
                 foreach ($counts as $key => $count) {
-                    $allPgByMonth[$month][$statusLokasi][$key] = ($allPgByMonth[$month][$statusLokasi][$key] ?? 0) + $count;
+                    $allPgByMonth[$month][$key] = ($allPgByMonth[$month][$key] ?? 0) + $count;
                 }
             }
         }
 
         ksort($allPgByMonth);
-        foreach ($allPgByMonth as $month => $statusGroups) {
-            foreach ($statusGroups as $statusLokasi => $counts) {
-                $rows[] = $this->formatMonthlyZoneSummaryRow($month, 'ALL PG', $counts, true, $statusLokasi);
-            }
+        foreach ($allPgByMonth as $month => $counts) {
+            $rows[] = $this->formatMonthlyZoneSummaryRow($month, 'ALL PG', $counts, true);
         }
 
         return response()->json(['rows' => $rows]);
@@ -253,7 +228,6 @@ class WaterBalanceController extends Controller
             'zone' => ['required', 'in:At WP,MAD 50% - WP,FC - MAD 50%,At FC'],
             'pg' => ['nullable', 'string'],
             'status_harian' => ['nullable', 'string'],
-            'status_lokasi' => ['nullable', 'string'],
         ]);
 
         $monthExpression = match (DB::connection()->getDriverName()) {
@@ -263,7 +237,7 @@ class WaterBalanceController extends Controller
         };
 
         $query = DailyWaterBalance::query()
-            ->select('pg', 'lokasi', 'status_lokasi', 'tanggal', 'luas_siram_rencana_ha', 'status_zone', 'status_harian')
+            ->select('pg', 'lokasi', 'tanggal', 'luas_siram_rencana_ha', 'status_zone', 'status_harian')
             ->whereRaw("{$monthExpression} = ?", [$validated['month']])
             ->orderBy('tanggal');
 
@@ -281,17 +255,6 @@ class WaterBalanceController extends Controller
             $query->whereRaw('LOWER(COALESCE(status_harian, "")) = ?', [strtolower(trim((string) $validated['status_harian']))]);
         }
 
-        if (! empty($validated['status_lokasi'])) {
-            if ($validated['status_lokasi'] === '__empty__') {
-                $query->where(function ($subQuery) {
-                    $subQuery->whereNull('status_lokasi')
-                        ->orWhere('status_lokasi', '');
-                });
-            } else {
-                $query->whereRaw('LOWER(COALESCE(status_lokasi, "")) = ?', [strtolower(trim((string) $validated['status_lokasi']))]);
-            }
-        }
-
         $records = $query->get();
         $latestAreaByLocation = [];
 
@@ -301,14 +264,13 @@ class WaterBalanceController extends Controller
 
         $rows = $records
             ->where('status_zone', $validated['zone'])
-            ->groupBy(fn ($record) => $record->pg.'|'.$record->lokasi.'|'.($record->status_lokasi ?? ''))
+            ->groupBy(fn ($record) => $record->pg.'|'.$record->lokasi)
             ->map(function ($locationRecords) use ($latestAreaByLocation) {
                 $record = $locationRecords->first();
 
                 return [
                     'pg' => $record->pg,
                     'lokasi' => $record->lokasi,
-                    'status_lokasi' => $record->status_lokasi,
                     'luas_tanaman_ha' => $latestAreaByLocation[$record->pg.'|'.$record->lokasi] ?? 0,
                     'status_zone' => $record->status_zone,
                     'status_harian' => $locationRecords
@@ -331,7 +293,7 @@ class WaterBalanceController extends Controller
         return trim((string) $normalized, " \t\n\r\0\x0B-");
     }
 
-    private function formatMonthlyZoneSummaryRow(string $month, string $pg, array $counts, bool $isAllPg, string $statusLokasi = ''): array
+    private function formatMonthlyZoneSummaryRow(string $month, string $pg, array $counts, bool $isAllPg): array
     {
         $totalDays = $counts['total_days'];
         $totalArea = (float) ($counts['total_area_ha'] ?? 0);
@@ -340,7 +302,6 @@ class WaterBalanceController extends Controller
             'month' => $month,
             'pg' => $pg,
             'is_all_pg' => $isAllPg,
-            'status_lokasi' => $statusLokasi,
             ...$counts,
             'percentage_wp' => $totalDays > 0 ? round($counts['count_wp'] / $totalDays * 100, 1) : 0,
             'percentage_mad_wp' => $totalDays > 0 ? round($counts['count_mad_wp'] / $totalDays * 100, 1) : 0,
@@ -410,13 +371,9 @@ class WaterBalanceController extends Controller
             $query->whereRaw('LOWER(COALESCE(status_harian, "")) = ?', [strtolower(trim((string) $request->query('status_harian')))]);
         }
 
-        if ($request->filled('status_lokasi')) {
-            $query->whereRaw('LOWER(COALESCE(status_lokasi, "")) = ?', [strtolower(trim((string) $request->query('status_lokasi')))]);
-        }
-
         // Ambil seluruh data tanggal untuk mendeteksi rentang bulan secara menyeluruh (termasuk Mei)
         $allData = $query
-            ->select('pg', 'lokasi', 'status_lokasi', 'tanggal', 'irigasi_mm', 'status_harian')
+            ->select('pg', 'lokasi', 'tanggal', 'irigasi_mm', 'status_harian')
             ->orderBy('pg')
             ->orderBy('lokasi')
             ->orderBy('tanggal')
@@ -426,7 +383,7 @@ class WaterBalanceController extends Controller
         $allMonths = [];
 
         foreach ($allData as $row) {
-            $locationKey = $row->pg.'|'.$row->lokasi.'|'.($row->status_lokasi ?? '');
+            $locationKey = $row->pg.'|'.$row->lokasi;
             $monthKey = substr($row->tanggal, 0, 7); // Format "YYYY-MM"
 
             $allMonths[$monthKey] = true;
@@ -435,7 +392,6 @@ class WaterBalanceController extends Controller
                 $grouped[$locationKey] = [
                     'pg' => $row->pg,
                     'lokasi' => $row->lokasi,
-                    'status_lokasi' => $row->status_lokasi,
                     'months' => [],
                 ];
             }
