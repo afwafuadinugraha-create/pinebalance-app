@@ -557,7 +557,7 @@
                     <div class="kpi-card kpi-green">
                         <div class="kpi-icon-box"><i class="fa-solid fa-leaf"></i></div>
                         <div>
-                            <span class="kpi-title">FC (Field Capacity)</span>
+                            <span class="kpi-title">FC</span>
                             <div class="kpi-value">105 <small>mm</small></div>
                         </div>
                     </div>
@@ -571,7 +571,7 @@
                     <div class="kpi-card kpi-red">
                         <div class="kpi-icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div>
                         <div>
-                            <span class="kpi-title">WP (Wilting Point)</span>
+                            <span class="kpi-title">WP</span>
                             <div class="kpi-value">54 <small>mm</small></div>
                         </div>
                     </div>
@@ -638,22 +638,22 @@
 
                         <div class="pie-details-legend">
                             <div class="legend-stat-item fc">
-                                <div class="title">🟢 Full (Field Capacity)</div>
+                                <div class="title">🟢 FC</div>
                                 <div class="value" id="legFcVal">0 Days</div>
                                 <div class="percentage" id="legFcPerc">0% of total</div>
                             </div>
                             <div class="legend-stat-item fc-mad">
-                                <div class="title">🔵 Safe (Optimal)</div>
+                                <div class="title">🔵 FC-MAD 50%</div>
                                 <div class="value" id="legFcMadVal">0 Days</div>
                                 <div class="percentage" id="legFcMadPerc">0% of total</div>
                             </div>
                             <div class="legend-stat-item mad-wp">
-                                <div class="title">🟡 Drying (Warning)</div>
+                                <div class="title">🟡 MAD 50%-WP</div>
                                 <div class="value" id="legMadWpVal">0 Days</div>
                                 <div class="percentage" id="legMadWpPerc">0% of total</div>
                             </div>
                             <div class="legend-stat-item wp">
-                                <div class="title">🔴 Critical (Wilting Point)</div>
+                                <div class="title">🔴 WP</div>
                                 <div class="value" id="legWpVal">0 Days</div>
                                 <div class="percentage" id="legWpPerc">0% of total</div>
                             </div>
@@ -740,11 +740,11 @@
                         <thead>
                             <tr>
                                 <th>Bulan</th>
-                                <th style="text-align: center; color: #b91c1c;">Critical · Wilting Point</th>
-                                <th style="text-align: center; color: #a16207;">Drying · Warning</th>
-                                <th style="text-align: center; color: #1d4ed8;">Safe · Optimal</th>
-                                <th style="text-align: center; color: #15803d;">Full · Field Capacity</th>
-                                <th style="text-align: center;">Luas tanaman</th>
+                                <th style="text-align: center; color: #b91c1c;">WP</th>
+                                <th style="text-align: center; color: #a16207;">MAD 50%-WP</th>
+                                <th style="text-align: center; color: #1d4ed8;">FC-MAD 50%</th>
+                                <th style="text-align: center; color: #15803d;">FC</th>
+                                <th style="text-align: center;">Total luas tanaman</th>
                                 <th style="text-align: center;">Jumlah lokasi</th>
                             </tr>
                         </thead>
@@ -790,10 +790,10 @@
                             <tr>
                                 <th style="width: 60px; text-align: center;">Rank</th>
                                 <th>PG - Location</th>
-                                <th style="text-align: center;">Full (Days / %)</th>
-                                <th style="text-align: center;">Safe (Days / %)</th>
-                                <th style="text-align: center;">Drying (Days / %)</th>
-                                <th style="text-align: center;">Critical (Days / %)</th>
+                                <th style="text-align: center;">FC (Days / %)</th>
+                                <th style="text-align: center;">FC-MAD 50% (Days / %)</th>
+                                <th style="text-align: center;">MAD 50%-WP (Days / %)</th>
+                                <th style="text-align: center;">WP (Days / %)</th>
                                 <th style="text-align: center;">Total Days</th>
                             </tr>
                         </thead>

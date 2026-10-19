@@ -5,10 +5,10 @@ let currentLocationRows = [];
 let monthlyZoneDetailsRequestId = 0;
 
 const monthlyZoneChartZones = [
-    { label: 'Critical (Wilting Point)', status: 'At WP', count: 'count_wp', areaCount: 'area_wp', percentage: 'percentage_wp', areaPercentage: 'area_percentage_wp', className: 'zone-critical', color: '#ef4444' },
-    { label: 'Drying (Warning)', status: 'MAD 50% - WP', count: 'count_mad_wp', areaCount: 'area_mad_wp', percentage: 'percentage_mad_wp', areaPercentage: 'area_percentage_mad_wp', className: 'zone-drying', color: '#eab308' },
-    { label: 'Safe (Optimal)', status: 'FC - MAD 50%', count: 'count_fc_mad', areaCount: 'area_fc_mad', percentage: 'percentage_fc_mad', areaPercentage: 'area_percentage_fc_mad', className: 'zone-safe', color: '#3b82f6' },
-    { label: 'Full (Field Capacity)', status: 'At FC', count: 'count_fc', areaCount: 'area_fc', percentage: 'percentage_fc', areaPercentage: 'area_percentage_fc', className: 'zone-full', color: '#22c55e' },
+    { label: 'WP', status: 'At WP', count: 'count_wp', areaCount: 'area_wp', percentage: 'percentage_wp', areaPercentage: 'area_percentage_wp', className: 'zone-critical', color: '#ef4444' },
+    { label: 'MAD 50%-WP', status: 'MAD 50% - WP', count: 'count_mad_wp', areaCount: 'area_mad_wp', percentage: 'percentage_mad_wp', areaPercentage: 'area_percentage_mad_wp', className: 'zone-drying', color: '#eab308' },
+    { label: 'FC-MAD 50%', status: 'FC - MAD 50%', count: 'count_fc_mad', areaCount: 'area_fc_mad', percentage: 'percentage_fc_mad', areaPercentage: 'area_percentage_fc_mad', className: 'zone-safe', color: '#3b82f6' },
+    { label: 'FC', status: 'At FC', count: 'count_fc', areaCount: 'area_fc', percentage: 'percentage_fc', areaPercentage: 'area_percentage_fc', className: 'zone-full', color: '#22c55e' },
 ];
 
 function renderWilayahAlerts(pg = '') {
@@ -422,7 +422,7 @@ function renderPieChart(rows) {
     statusPieChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Full (FC)', 'Safe (Optimal)', 'Drying (Warning)', 'Critical (Wilting Point)'],
+            labels: ['FC', 'FC-MAD 50%', 'MAD 50%-WP', 'WP'],
             datasets: [{
                 data: [counts['At FC'], counts['FC - MAD 50%'], counts['MAD 50% - WP'], counts['At WP']],
                 backgroundColor: ['#22c55e', '#3b82f6', '#eab308', '#ef4444']
@@ -760,10 +760,10 @@ function renderCompareBarChart(summaryList, cleanPG, isAllPG = false) {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Full (FC)', data: dataFC, backgroundColor: '#22c55e' },
-                { label: 'Safe (Optimal)', data: dataFCMAD, backgroundColor: '#3b82f6' },
-                { label: 'Drying (Warning)', data: dataMADWP, backgroundColor: '#eab308' },
-                { label: 'Critical (Wilting Point)', data: dataWP, backgroundColor: '#ef4444' }
+                { label: 'FC', data: dataFC, backgroundColor: '#22c55e' },
+                { label: 'FC-MAD 50%', data: dataFCMAD, backgroundColor: '#3b82f6' },
+                { label: 'MAD 50%-WP', data: dataMADWP, backgroundColor: '#eab308' },
+                { label: 'WP', data: dataWP, backgroundColor: '#ef4444' }
             ]
         },
         options: {
