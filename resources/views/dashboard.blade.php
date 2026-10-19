@@ -33,10 +33,7 @@
             display: flex;
             flex-direction: column;
 
-            background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.80)), 
-                        url('{{ asset("images/Produk Unggulan PT GGP-min.jpeg") }}') !important;
-            background-size: cover !important;
-            background-position: center !important;
+            background: #0f172a !important;
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
             transition: transform 0.3s ease;
