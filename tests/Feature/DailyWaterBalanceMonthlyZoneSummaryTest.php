@@ -221,7 +221,7 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('rows.0.luas_tanaman_ha', 12);
     }
 
-    public function test_location_status_is_available_in_daily_data_but_not_analytics(): void
+    public function test_location_status_is_available_in_daily_data_but_not_displayed_on_dashboard_or_analytics(): void
     {
         foreach ([
             ['tanggal' => '2026-08-01', 'status_lokasi' => 'NSFC', 'zone' => 'At WP'],
@@ -241,7 +241,7 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
 
         $dashboard = $this->get('/')
             ->assertOk()
-            ->assertSee('Status Lokasi');
+            ->assertDontSee('Status Lokasi');
         $summaryStart = strpos($dashboard->getContent(), '<!-- TAB 3: SUMMARY & ANALYTICS -->');
 
         $this->assertNotFalse($summaryStart);

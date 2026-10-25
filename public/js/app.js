@@ -458,9 +458,6 @@ function renderRawDataTable(rows) {
             <td><span style="background:${badgeColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${r.status_zone}</span></td>
             <td><span style="background:${dailyStatus === '-' ? '#cbd5e1' : dailyStatusColor}; color:#fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight:700;">${displayDailyStatus}</span>${r.status_keterangan ? `<br><small style="color:#64748b;">${r.status_keterangan}</small>` : ''}</td>
         `;
-        const locationStatusCell = document.createElement('td');
-        locationStatusCell.textContent = r.status_lokasi || '-';
-        tr.insertBefore(locationStatusCell, tr.children[2]);
         tbody.appendChild(tr);
     });
 }
