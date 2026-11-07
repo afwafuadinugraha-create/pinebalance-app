@@ -915,10 +915,31 @@
                     body: formData,
                 });
 
-                const result = await response.json();
+                const responseText = await response.text();
+                let result;
+
+                try {
+                    result = JSON.parse(responseText);
+                } catch {
+                    if (response.status === 413) {
+                        throw new Error('File terlalu besar untuk batas upload server.');
+                    }
+                    if (response.status === 419) {
+                        throw new Error('Sesi upload berakhir. Muat ulang halaman, lalu coba lagi.');
+                    }
+
+                    throw new Error(
+                        'Server mengirim respons bukan JSON (HTTP ' + response.status +
+                        '). Periksa batas ukuran upload atau log server jika masalah berlanjut.'
+                    );
+                }
+
+                if (!result || typeof result !== 'object' || Array.isArray(result)) {
+                    throw new Error('Server mengirim respons yang tidak valid.');
+                }
 
                 if (!response.ok || result.success === false) {
-                    throw new Error(result.message || 'Import failed.');
+                    throw new Error(result.message || 'Import gagal (HTTP ' + response.status + ').');
                 }
 
                 const summary = result.summary || { created: 0, updated: 0, skipped: 0 };
@@ -926,7 +947,7 @@
                 uploadStatusText.textContent = 'Import complete | ' + summaryText;
                 uploadStatusText.style.color = '#166534';
                 uploadStatusText.style.background = 'rgba(34, 197, 94, 0.10)';
-                showToast('success', 'Import Complete', result.message + ' (' + summaryText + ')');
+                showToast('success', 'Import Complete', (result.message || 'Excel berhasil diproses.') + ' (' + summaryText + ')');
 
                 setTimeout(() => {
                     if (typeof onPGChange === 'function') {
