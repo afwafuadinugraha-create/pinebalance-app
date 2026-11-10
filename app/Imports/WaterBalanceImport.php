@@ -67,11 +67,15 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
             return $cleanPg.'_'.$cleanLokasi;
         });
 
-        foreach ($grouped as $key => $groupRows) {
+        foreach ($grouped as $groupRows) {
             $firstRow = $groupRows->first();
             $groupPg = $this->normalizePg($this->getValue($firstRow, ['pg', 'PG', 'pabrik_gula']));
             $groupLokasi = trim(preg_replace('/^lokasi\s*/i', '', $this->getValue($firstRow, ['lokasi', 'Lokasi', 'lokasi_blok', 'blok'])));
-            $this->normalizeExistingPgValues($groupPg, $groupLokasi);
+            $existingRows = $this->normalizeExistingPgValues($groupPg, $groupLokasi);
+            $existingByDate = $existingRows->keyBy(fn (DailyWaterBalance $record) => (string) $record->tanggal);
+            $statusByDate = $existingByDate->map(fn (DailyWaterBalance $record) => $record->status_lokasi);
+            $existingDates = $existingByDate->keys()->flip();
+            $upsertRows = [];
 
             $sortedRows = $groupRows->sortBy(function ($item) {
                 return $this->transformDate($this->getValue($item, ['tanggal', 'Tanggal', 'date', 'tgl']));
@@ -176,10 +180,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     $statusZone = 'At WP';
                 }
 
-                $exists = DailyWaterBalance::where('pg', $pg)
-                    ->where('lokasi', $lokasi)
-                    ->where('tanggal', $tanggal)
-                    ->exists();
+                $exists = isset($existingDates[$tanggal]);
 
                 $dailyAttributes = [
                     'wilayah' => $wilayah !== '' ? $wilayah : null,
@@ -193,19 +194,15 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                     'status_zone' => $statusZone,
                     'status_harian' => $statusHarian,
                     'status_keterangan' => $statusKeterangan,
+                    'status_lokasi' => $statusLokasi !== null ? strtoupper($statusLokasi) : $statusByDate->get($tanggal),
                 ];
-                if ($statusLokasi !== null) {
-                    $dailyAttributes['status_lokasi'] = strtoupper($statusLokasi);
-                }
-
-                DailyWaterBalance::updateOrCreate(
-                    [
-                        'pg' => $pg,
-                        'lokasi' => $lokasi,
-                        'tanggal' => $tanggal,
-                    ],
-                    $dailyAttributes
-                );
+                $statusByDate[$tanggal] = $dailyAttributes['status_lokasi'];
+                $upsertRows[$tanggal] = array_merge([
+                    'pg' => $pg,
+                    'lokasi' => $lokasi,
+                    'tanggal' => $tanggal,
+                ], $dailyAttributes);
+                $existingDates[$tanggal] = true;
 
                 if ($exists) {
                     $this->updated++;
@@ -214,6 +211,27 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
                 }
 
                 $previousWB = $currentWB;
+            }
+
+            foreach (array_chunk(array_values($upsertRows), 50) as $batch) {
+                DailyWaterBalance::upsert(
+                    $batch,
+                    ['pg', 'lokasi', 'tanggal'],
+                    [
+                        'wilayah',
+                        'rainfall_mm',
+                        'luas_siram_rencana_ha',
+                        'luas_siram_real_ha',
+                        'irigasi_mm',
+                        'irigasi_efektif_mm',
+                        'evapotranspirasi_mm',
+                        'water_balance_mm',
+                        'status_zone',
+                        'status_harian',
+                        'status_keterangan',
+                        'status_lokasi',
+                    ]
+                );
             }
         }
 
@@ -228,7 +246,7 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
         ];
     }
 
-    private function normalizeExistingPgValues(string $pg, string $lokasi): void
+    private function normalizeExistingPgValues(string $pg, string $lokasi): Collection
     {
         $matchingRows = DailyWaterBalance::where('lokasi', $lokasi)
             ->get()
@@ -249,6 +267,8 @@ class WaterBalanceImport implements ToCollection, WithHeadingRow
         if ($legacyIds->isNotEmpty()) {
             DailyWaterBalance::whereIn('id', $legacyIds)->update(['pg' => $pg]);
         }
+
+        return $matchingRows;
     }
 
     private function normalizePg($value): string
