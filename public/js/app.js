@@ -87,7 +87,7 @@ function formatMonthName(yearMonthStr) {
 
 function formatIrrigationDate(dateString) {
     const [year, month, day] = dateString.split('-');
-    const monthNames = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     return `${Number(day)} ${monthNames[Number(month) - 1] || month} ${year}`;
 }
@@ -818,7 +818,7 @@ function renderPGMonthlyIrrigationTable(pg, status = '') {
                             const currentDate = new Date(`${dates[index]}T00:00:00Z`);
                             const intervalDays = Math.round((currentDate - previousDate) / 86400000);
                             const interval = document.createElement('div');
-                            interval.textContent = `Siram ${index} → Siram ${index + 1}: jeda ${intervalDays} hari (${formatIrrigationDate(dates[index - 1])} ke ${formatIrrigationDate(dates[index])})`;
+                            interval.textContent = `Watering ${index} → Watering ${index + 1}: ${intervalDays}-day interval (${formatIrrigationDate(dates[index - 1])} to ${formatIrrigationDate(dates[index])})`;
                             details.appendChild(interval);
                         }
 
