@@ -793,6 +793,37 @@ function renderPGMonthlyIrrigationTable(pg, status = '') {
             const tbody = document.getElementById('irrigationMonthlyBody');
             if (!headerTr || !tbody) return;
 
+            if (tbody.dataset.intervalClickBound !== 'true') {
+                tbody.dataset.intervalClickBound = 'true';
+                tbody.addEventListener('click', event => {
+                    const button = event.target.closest('.irrigation-frequency-button');
+                    if (!button || !tbody.contains(button)) return;
+
+                    let details = button.nextElementSibling;
+                    if (!details || !details.classList.contains('irrigation-interval-details')) {
+                        const dates = button.dataset.wateringDates.split('|');
+                        details = document.createElement('div');
+                        details.className = 'irrigation-interval-details';
+                        details.style.cssText = 'margin-top: 6px; color: #475569; font-size: 11px; line-height: 1.5;';
+
+                        for (let index = 1; index < dates.length; index++) {
+                            const previousDate = new Date(`${dates[index - 1]}T00:00:00Z`);
+                            const currentDate = new Date(`${dates[index]}T00:00:00Z`);
+                            const intervalDays = Math.round((currentDate - previousDate) / 86400000);
+                            const interval = document.createElement('div');
+                            interval.textContent = `Siram ${index} → Siram ${index + 1}: jeda ${intervalDays} hari (${dates[index - 1]} ke ${dates[index]})`;
+                            details.appendChild(interval);
+                        }
+
+                        button.insertAdjacentElement('afterend', details);
+                    }
+
+                    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+                    button.setAttribute('aria-expanded', String(!isExpanded));
+                    details.hidden = isExpanded;
+                });
+            }
+
             let headerHTML = `<th>PG - Location</th>`;
             months.forEach(m => {
                 headerHTML += `<th style="text-align: center;">${formatMonthName(m)}</th>`;
@@ -817,8 +848,10 @@ function renderPGMonthlyIrrigationTable(pg, status = '') {
                     const hasData = monthlyData !== undefined;
                     const count = monthlyData?.count || 0;
                     rowTotal += count;
-                    const displayValue = count > 0
-                        ? `${count} Times`
+                    const displayValue = count > 1
+                        ? `<button type="button" class="irrigation-frequency-button" aria-expanded="false" style="border: 0; padding: 4px 8px; border-radius: 6px; background: #eff6ff; color: #0284c7; cursor: pointer; font: inherit; font-weight: 700;" data-watering-dates="${(monthlyData.dates || []).join('|')}">${count} Times</button>`
+                        : count === 1
+                            ? '1 Time'
                         : !hasData || monthlyData.bongkar ? '-' : '0 Times';
                     rowHTML += `<td style="text-align: center;">${displayValue}</td>`;
                 });

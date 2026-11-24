@@ -400,11 +400,13 @@ class WaterBalanceController extends Controller
                 $grouped[$locationKey]['months'][$monthKey] = [
                     'count' => 0,
                     'bongkar' => false,
+                    'dates' => [],
                 ];
             }
 
             if (floatval($row->irigasi_mm) > 0) {
                 $grouped[$locationKey]['months'][$monthKey]['count']++;
+                $grouped[$locationKey]['months'][$monthKey]['dates'][] = $row->tanggal;
             }
 
             if (strtolower((string) $row->status_harian) === 'bongkar') {

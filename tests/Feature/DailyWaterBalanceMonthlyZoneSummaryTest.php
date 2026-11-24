@@ -93,6 +93,29 @@ class DailyWaterBalanceMonthlyZoneSummaryTest extends TestCase
             ->assertJsonPath('report.1.months.2026-08.count', 1);
     }
 
+    public function test_monthly_irrigation_includes_watering_dates_for_interval_details(): void
+    {
+        foreach ([
+            ['tanggal' => '2026-06-01', 'irigasi_mm' => 10],
+            ['tanggal' => '2026-06-12', 'irigasi_mm' => 20],
+            ['tanggal' => '2026-06-25', 'irigasi_mm' => 0],
+        ] as $record) {
+            DailyWaterBalance::create([
+                'pg' => '01',
+                'lokasi' => 'A',
+                'tanggal' => $record['tanggal'],
+                'irigasi_mm' => $record['irigasi_mm'],
+                'water_balance_mm' => 50,
+                'status_zone' => 'At FC',
+            ]);
+        }
+
+        $this->getJson('/api/pg-irrigation-monthly?pg=01')
+            ->assertOk()
+            ->assertJsonPath('report.0.months.2026-06.count', 2)
+            ->assertJsonPath('report.0.months.2026-06.dates', ['2026-06-01', '2026-06-12']);
+    }
+
     public function test_selected_daily_status_filters_all_summary_aggregations(): void
     {
         foreach ([
