@@ -85,6 +85,13 @@ function formatMonthName(yearMonthStr) {
     return `${monthName}-${year}`;
 }
 
+function formatIrrigationDate(dateString) {
+    const [year, month, day] = dateString.split('-');
+    const monthNames = ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember'];
+
+    return `${Number(day)} ${monthNames[Number(month) - 1] || month} ${year}`;
+}
+
 function switchTab(tabId, element) {
     document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
@@ -811,7 +818,7 @@ function renderPGMonthlyIrrigationTable(pg, status = '') {
                             const currentDate = new Date(`${dates[index]}T00:00:00Z`);
                             const intervalDays = Math.round((currentDate - previousDate) / 86400000);
                             const interval = document.createElement('div');
-                            interval.textContent = `Siram ${index} → Siram ${index + 1}: jeda ${intervalDays} hari (${dates[index - 1]} ke ${dates[index]})`;
+                            interval.textContent = `Siram ${index} → Siram ${index + 1}: jeda ${intervalDays} hari (${formatIrrigationDate(dates[index - 1])} ke ${formatIrrigationDate(dates[index])})`;
                             details.appendChild(interval);
                         }
 
